@@ -20,6 +20,7 @@ ce projet dispose de deux parties :
 connexion avec :
 
 -Numero de compte 
+
 -Mot de passe : CLIENT2026
 
 2- Partie administrateur 
