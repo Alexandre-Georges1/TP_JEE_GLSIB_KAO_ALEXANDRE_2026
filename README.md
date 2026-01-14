@@ -1,3 +1,5 @@
+# EGABANK PROJECT
+
 NOM: KAO ALEXANDRE GEORGES ESSOWEDEOU
 
 Ce projet contient à la fois le backend et le frontend 
