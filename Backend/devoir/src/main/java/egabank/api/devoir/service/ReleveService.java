@@ -1,10 +1,16 @@
 package egabank.api.devoir.service;
 
+import com.itextpdf.io.image.ImageData;
+import com.itextpdf.io.image.ImageDataFactory;
 import com.itextpdf.kernel.colors.ColorConstants;
+import com.itextpdf.kernel.colors.DeviceRgb;
 import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfWriter;
 import com.itextpdf.layout.Document;
+import com.itextpdf.layout.borders.Border;
+import com.itextpdf.layout.borders.SolidBorder;
 import com.itextpdf.layout.element.Cell;
+import com.itextpdf.layout.element.Image;
 import com.itextpdf.layout.element.Paragraph;
 import com.itextpdf.layout.element.Table;
 import com.itextpdf.layout.properties.TextAlignment;
@@ -14,9 +20,11 @@ import egabank.api.devoir.entity.Compte;
 import egabank.api.devoir.entity.Transaction;
 import egabank.api.devoir.repository.CompteRepository;
 import egabank.api.devoir.repository.TransactionRepository;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -25,6 +33,14 @@ import java.util.List;
 @Service
 public class ReleveService {
     
+    // Couleurs de la charte graphique EGABANK
+    private static final DeviceRgb PRIMARY_COLOR = new DeviceRgb(22, 163, 74);    // Vert principal #16a34a
+    private static final DeviceRgb SECONDARY_COLOR = new DeviceRgb(20, 83, 45);   // Vert foncé #14532d
+    private static final DeviceRgb SUCCESS_COLOR = new DeviceRgb(22, 163, 74);    // Vert
+    private static final DeviceRgb DANGER_COLOR = new DeviceRgb(220, 38, 38);     // Rouge
+    private static final DeviceRgb GRAY_LIGHT = new DeviceRgb(243, 244, 246);     // Gris clair
+    private static final DeviceRgb GRAY_DARK = new DeviceRgb(107, 114, 128);      // Gris foncé
+    
     private final CompteRepository compteRepository;
     private final TransactionRepository transactionRepository;
     
@@ -32,6 +48,7 @@ public class ReleveService {
         this.compteRepository = compteRepository;
         this.transactionRepository = transactionRepository;
     }
+    
     public ReleveDTO obtenirDonneesReleve(Long compteId, LocalDate dateDebut, LocalDate dateFin) {
         Compte compte = compteRepository.findById(compteId)
             .orElseThrow(() -> new RuntimeException("Compte non trouvé"));
@@ -64,7 +81,6 @@ public class ReleveService {
         releve.setTotalDebits(totalDebits);
         releve.setSoldeFin(compte.getSolde());
         
-        // Calculer le solde de début (solde actuel - mouvements de la période)
         Integer soldeDebut = compte.getSolde() - totalCredits + totalDebits;
         releve.setSoldeDebut(soldeDebut);
         return releve;
@@ -79,117 +95,342 @@ public class ReleveService {
         PdfWriter writer = new PdfWriter(baos);
         PdfDocument pdf = new PdfDocument(writer);
         Document document = new Document(pdf);
+        document.setMargins(40, 40, 40, 40);
         
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
         
-        // En-tête du document
-        document.add(new Paragraph("RELEVÉ BANCAIRE")
-            .setBold()
-            .setFontSize(20)
-            .setTextAlignment(TextAlignment.CENTER));
+        // ========== EN-TÊTE AVEC LOGO ==========
+        addHeader(document);
         
-        document.add(new Paragraph("EGA BANK")
-            .setFontSize(16)
+        // ========== TITRE DU DOCUMENT ==========
+        document.add(new Paragraph("RELEVÉ DE COMPTE")
+            .setBold()
+            .setFontSize(22)
+            .setFontColor(SECONDARY_COLOR)
             .setTextAlignment(TextAlignment.CENTER)
-            .setMarginBottom(20));
+            .setMarginTop(20)
+            .setMarginBottom(5));
         
-        // Informations du compte
-        document.add(new Paragraph("Informations du compte")
+        document.add(new Paragraph("Période du " + dateDebut.format(dateFormatter) + 
+            " au " + dateFin.format(dateFormatter))
+            .setFontSize(11)
+            .setFontColor(GRAY_DARK)
+            .setTextAlignment(TextAlignment.CENTER)
+            .setMarginBottom(25));
+        
+        // ========== INFORMATIONS DU COMPTE ==========
+        addAccountInfoSection(document, compte);
+        
+        // ========== RÉSUMÉ FINANCIER ==========
+        addFinancialSummary(document, releve);
+        
+        // ========== TABLEAU DES TRANSACTIONS ==========
+        addTransactionsTable(document, transactions, dateTimeFormatter);
+        
+        // ========== PIED DE PAGE ==========
+        addFooter(document, dateFormatter);
+        
+        document.close();
+        return baos.toByteArray();
+    }
+    
+    private void addHeader(Document document) {
+        try {
+            // Logo centré en haut
+            Table logoTable = new Table(1);
+            logoTable.setWidth(UnitValue.createPercentValue(100));
+            
+            Cell logoCell = new Cell().setBorder(Border.NO_BORDER);
+            logoCell.setTextAlignment(TextAlignment.CENTER);
+            
+            try {
+                // Charger le logo depuis les ressources
+                ClassPathResource logoResource = new ClassPathResource("static/logo.png");
+                if (logoResource.exists()) {
+                    InputStream logoStream = logoResource.getInputStream();
+                    byte[] logoBytes = logoStream.readAllBytes();
+                    ImageData imageData = ImageDataFactory.create(logoBytes);
+                    Image logo = new Image(imageData);
+                    logo.setWidth(100);
+                    logo.setHeight(100);
+                    logo.setHorizontalAlignment(com.itextpdf.layout.properties.HorizontalAlignment.CENTER);
+                    logoCell.add(logo);
+                } else {
+                    // Logo texte si l'image n'existe pas
+                    logoCell.add(new Paragraph("EGABANK")
+                        .setBold()
+                        .setFontSize(32)
+                        .setFontColor(PRIMARY_COLOR)
+                        .setTextAlignment(TextAlignment.CENTER));
+                }
+            } catch (Exception e) {
+                // Fallback: logo texte
+                logoCell.add(new Paragraph("EGABANK")
+                    .setBold()
+                    .setFontSize(32)
+                    .setFontColor(PRIMARY_COLOR)
+                    .setTextAlignment(TextAlignment.CENTER));
+            }
+            logoTable.addCell(logoCell);
+            document.add(logoTable);
+            
+            // Informations de la banque centrées sous le logo
+            document.add(new Paragraph("Siège Social: Lomé, Togo | Tél: +228 91 18 12 81 | Email: contact@egabank.tg")
+                .setFontSize(9)
+                .setFontColor(GRAY_DARK)
+                .setTextAlignment(TextAlignment.CENTER)
+                .setMarginTop(5));
+            
+            // Ligne de séparation
+            Table separatorLine = new Table(1);
+            separatorLine.setWidth(UnitValue.createPercentValue(100));
+            separatorLine.addCell(new Cell()
+                .setHeight(3)
+                .setBackgroundColor(PRIMARY_COLOR)
+                .setBorder(Border.NO_BORDER));
+            separatorLine.setMarginTop(10);
+            document.add(separatorLine);
+            
+        } catch (Exception e) {
+            // En cas d'erreur, afficher un en-tête simple
+            document.add(new Paragraph("EGABANK")
+                .setBold()
+                .setFontSize(24)
+                .setFontColor(PRIMARY_COLOR)
+                .setTextAlignment(TextAlignment.CENTER));
+        }
+    }
+    
+    private void addAccountInfoSection(Document document, Compte compte) {
+        // Boîte d'information du compte
+        Table infoBox = new Table(2);
+        infoBox.setWidth(UnitValue.createPercentValue(100));
+        infoBox.setBackgroundColor(GRAY_LIGHT);
+        infoBox.setBorder(new SolidBorder(PRIMARY_COLOR, 1));
+        
+        // Colonne gauche
+        Cell leftCell = new Cell().setBorder(Border.NO_BORDER).setPadding(15);
+        leftCell.add(new Paragraph("TITULAIRE DU COMPTE")
+            .setFontSize(8)
+            .setFontColor(GRAY_DARK)
+            .setBold());
+        leftCell.add(new Paragraph(compte.getClient().getPrenom() + " " + compte.getClient().getNom())
+            .setFontSize(12)
             .setBold()
+            .setFontColor(SECONDARY_COLOR));
+        leftCell.add(new Paragraph(compte.getClient().getAdresse())
+            .setFontSize(9)
+            .setFontColor(GRAY_DARK));
+        infoBox.addCell(leftCell);
+        
+        // Colonne droite
+        Cell rightCell = new Cell().setBorder(Border.NO_BORDER).setPadding(15);
+        rightCell.add(new Paragraph("NUMÉRO DE COMPTE")
+            .setFontSize(8)
+            .setFontColor(GRAY_DARK)
+            .setBold()
+            .setTextAlignment(TextAlignment.RIGHT));
+        rightCell.add(new Paragraph(compte.getNumeroCompte())
             .setFontSize(14)
-            .setMarginTop(10));
-        
-        document.add(new Paragraph("Compte N° : " + compte.getNumeroCompte()));
-        document.add(new Paragraph("Titulaire : " + compte.getClient().getNom() + " " + 
-            compte.getClient().getPrenom()));
-        document.add(new Paragraph("Période : du " + dateDebut.format(dateFormatter) + 
-            " au " + dateFin.format(dateFormatter)));
-        document.add(new Paragraph("\n"));
-        
-        // Résumé
-        document.add(new Paragraph("Résumé de la période")
             .setBold()
-            .setFontSize(14));
+            .setFontColor(PRIMARY_COLOR)
+            .setTextAlignment(TextAlignment.RIGHT));
+        rightCell.add(new Paragraph("Type: " + compte.getTypeCompte())
+            .setFontSize(9)
+            .setFontColor(GRAY_DARK)
+            .setTextAlignment(TextAlignment.RIGHT));
+        infoBox.addCell(rightCell);
+        
+        document.add(infoBox);
+        document.add(new Paragraph("\n"));
+    }
+    
+    private void addFinancialSummary(Document document, ReleveDTO releve) {
+        document.add(new Paragraph("RÉSUMÉ FINANCIER")
+            .setBold()
+            .setFontSize(12)
+            .setFontColor(SECONDARY_COLOR)
+            .setMarginBottom(10));
         
         double soldeDebut = releve.getSoldeDebut() != null ? releve.getSoldeDebut().doubleValue() : 0.0;
         double totalCredits = releve.getTotalCredits() != null ? releve.getTotalCredits().doubleValue() : 0.0;
         double totalDebits = releve.getTotalDebits() != null ? releve.getTotalDebits().doubleValue() : 0.0;
         double soldeFin = releve.getSoldeFin() != null ? releve.getSoldeFin().doubleValue() : 0.0;
         
-        document.add(new Paragraph("Solde début de période : " + 
-            String.format("%.2f F CFA", soldeDebut)));
-        document.add(new Paragraph("Total des crédits : +" + 
-            String.format("%.2f F CFA", totalCredits))
-            .setFontColor(ColorConstants.GREEN));
-        document.add(new Paragraph("Total des débits : -" + 
-            String.format("%.2f F CFA", totalDebits))
-            .setFontColor(ColorConstants.RED));
-        document.add(new Paragraph("Solde fin de période : " + 
-            String.format("%.2f F CFA", soldeFin))
-            .setBold());
-        document.add(new Paragraph("Nombre de transactions : " + releve.getNombreTransactions()));
-        document.add(new Paragraph("\n"));
+        // Tableau du résumé
+        float[] summaryWidths = {1, 1, 1, 1};
+        Table summaryTable = new Table(UnitValue.createPercentArray(summaryWidths));
+        summaryTable.setWidth(UnitValue.createPercentValue(100));
         
-        // Tableau des transactions
+        // Solde début
+        Cell cell1 = createSummaryCell("Solde initial", 
+            String.format("%,.0f F CFA", soldeDebut), GRAY_DARK);
+        summaryTable.addCell(cell1);
+        
+        // Total crédits
+        Cell cell2 = createSummaryCell("Total crédits", 
+            String.format("+%,.0f F CFA", totalCredits), SUCCESS_COLOR);
+        summaryTable.addCell(cell2);
+        
+        // Total débits
+        Cell cell3 = createSummaryCell("Total débits", 
+            String.format("-%,.0f F CFA", totalDebits), DANGER_COLOR);
+        summaryTable.addCell(cell3);
+        
+        // Solde final
+        Cell cell4 = createSummaryCell("Solde final", 
+            String.format("%,.0f F CFA", soldeFin), PRIMARY_COLOR);
+        cell4.setBackgroundColor(new DeviceRgb(240, 253, 244));  // Vert très clair
+        summaryTable.addCell(cell4);
+        
+        document.add(summaryTable);
+        
+        document.add(new Paragraph("Nombre total de transactions : " + releve.getNombreTransactions())
+            .setFontSize(9)
+            .setFontColor(GRAY_DARK)
+            .setMarginTop(5)
+            .setMarginBottom(20));
+    }
+    
+    private Cell createSummaryCell(String label, String value, DeviceRgb valueColor) {
+        Cell cell = new Cell()
+            .setBorder(new SolidBorder(GRAY_LIGHT, 1))
+            .setPadding(10);
+        cell.add(new Paragraph(label)
+            .setFontSize(8)
+            .setFontColor(GRAY_DARK));
+        cell.add(new Paragraph(value)
+            .setFontSize(11)
+            .setBold()
+            .setFontColor(valueColor));
+        return cell;
+    }
+    
+    private void addTransactionsTable(Document document, List<Transaction> transactions, 
+            DateTimeFormatter dateTimeFormatter) {
+        
+        document.add(new Paragraph("DÉTAIL DES OPÉRATIONS")
+            .setBold()
+            .setFontSize(12)
+            .setFontColor(SECONDARY_COLOR)
+            .setMarginBottom(10));
+        
         if (!transactions.isEmpty()) {
-            document.add(new Paragraph("Détail des opérations")
-                .setBold()
-                .setFontSize(14));
-            
-            float[] columnWidths = {3, 2, 2};
+            float[] columnWidths = {2.5f, 2f, 1.5f, 2f};
             Table table = new Table(UnitValue.createPercentArray(columnWidths));
             table.setWidth(UnitValue.createPercentValue(100));
             
             // En-têtes du tableau
-            table.addHeaderCell(new Cell().add(new Paragraph("Date").setBold())
-                .setBackgroundColor(ColorConstants.LIGHT_GRAY)
-                .setTextAlignment(TextAlignment.CENTER));
-            table.addHeaderCell(new Cell().add(new Paragraph("Type").setBold())
-                .setBackgroundColor(ColorConstants.LIGHT_GRAY)
-                .setTextAlignment(TextAlignment.CENTER));
-            table.addHeaderCell(new Cell().add(new Paragraph("Montant").setBold())
-                .setBackgroundColor(ColorConstants.LIGHT_GRAY)
-                .setTextAlignment(TextAlignment.CENTER));
+            String[] headers = {"Date & Heure", "Type d'opération", "Référence", "Montant"};
+            for (String header : headers) {
+                Cell headerCell = new Cell()
+                    .add(new Paragraph(header).setBold().setFontSize(9).setFontColor(ColorConstants.WHITE))
+                    .setBackgroundColor(SECONDARY_COLOR)
+                    .setTextAlignment(TextAlignment.CENTER)
+                    .setPadding(8);
+                table.addHeaderCell(headerCell);
+            }
             
+            // Lignes de données
+            boolean alternate = false;
             for (Transaction t : transactions) {
-                table.addCell(new Cell().add(new Paragraph(
-                    t.getDateTransaction().format(dateTimeFormatter)))
-                    .setFontSize(9));
+                com.itextpdf.kernel.colors.Color bgColor = alternate ? GRAY_LIGHT : ColorConstants.WHITE;
                 
-                table.addCell(new Cell().add(new Paragraph(t.getType()))
-                    .setFontSize(9));
+                // Date
+                table.addCell(new Cell()
+                    .add(new Paragraph(t.getDateTransaction().format(dateTimeFormatter)).setFontSize(9))
+                    .setBackgroundColor(bgColor)
+                    .setPadding(6));
                 
+                // Type avec icône textuelle
+                String typeLabel = getTypeLabel(t.getType());
+                table.addCell(new Cell()
+                    .add(new Paragraph(typeLabel).setFontSize(9))
+                    .setBackgroundColor(bgColor)
+                    .setPadding(6));
+                
+                // Référence
+                table.addCell(new Cell()
+                    .add(new Paragraph("#" + t.getId()).setFontSize(9).setFontColor(GRAY_DARK))
+                    .setBackgroundColor(bgColor)
+                    .setTextAlignment(TextAlignment.CENTER)
+                    .setPadding(6));
+                
+                // Montant
                 boolean isCredit = t.getType().equals("DEPOT") || t.getType().equals("VIREMENT_RECU");
                 double montant = t.getMontant() != null ? t.getMontant().doubleValue() : 0.0;
+                String montantStr = (isCredit ? "+" : "-") + String.format("%,.0f F CFA", montant);
                 
-                Paragraph montantPara = new Paragraph(
-                    (isCredit ? "+" : "-") + String.format("%.2f F CFA", montant))
-                    .setFontSize(9)
-                    .setTextAlignment(TextAlignment.RIGHT);
+                table.addCell(new Cell()
+                    .add(new Paragraph(montantStr)
+                        .setFontSize(9)
+                        .setBold()
+                        .setFontColor(isCredit ? SUCCESS_COLOR : DANGER_COLOR))
+                    .setBackgroundColor(bgColor)
+                    .setTextAlignment(TextAlignment.RIGHT)
+                    .setPadding(6));
                 
-                if (isCredit) {
-                    montantPara.setFontColor(ColorConstants.GREEN);
-                } else {
-                    montantPara.setFontColor(ColorConstants.RED);
-                }
-                
-                table.addCell(new Cell().add(montantPara));
+                alternate = !alternate;
             }
             
             document.add(table);
         } else {
-            document.add(new Paragraph("Aucune transaction pour cette période")
-                .setItalic()
-                .setTextAlignment(TextAlignment.CENTER));
+            // Message si aucune transaction
+            Table emptyBox = new Table(1);
+            emptyBox.setWidth(UnitValue.createPercentValue(100));
+            emptyBox.addCell(new Cell()
+                .add(new Paragraph("Aucune transaction pour cette période")
+                    .setItalic()
+                    .setFontColor(GRAY_DARK)
+                    .setTextAlignment(TextAlignment.CENTER))
+                .setBackgroundColor(GRAY_LIGHT)
+                .setPadding(20)
+                .setBorder(new SolidBorder(GRAY_DARK, 1)));
+            document.add(emptyBox);
         }
-        document.add(new Paragraph("\n\n"));
-        document.add(new Paragraph("Document édité le " + LocalDate.now().format(dateFormatter))
-            .setFontSize(8)
-            .setTextAlignment(TextAlignment.CENTER)
-            .setItalic());
+    }
+    
+    private String getTypeLabel(String type) {
+        switch (type) {
+            case "DEPOT":
+                return "↓ Dépôt";
+            case "RETRAIT":
+                return "↑ Retrait";
+            case "VIREMENT":
+                return "→ Virement émis";
+            case "VIREMENT_RECU":
+                return "← Virement reçu";
+            default:
+                return type;
+        }
+    }
+    
+    private void addFooter(Document document, DateTimeFormatter dateFormatter) {
+        document.add(new Paragraph("\n"));
         
-        document.close();
-        return baos.toByteArray();
+        // Ligne de séparation
+        Table separatorLine = new Table(1);
+        separatorLine.setWidth(UnitValue.createPercentValue(100));
+        separatorLine.addCell(new Cell()
+            .setHeight(1)
+            .setBackgroundColor(GRAY_LIGHT)
+            .setBorder(Border.NO_BORDER));
+        document.add(separatorLine);
+        
+        // Informations de pied de page
+        document.add(new Paragraph("Document généré automatiquement le " + 
+            LocalDate.now().format(dateFormatter) + " par EGABANK")
+            .setFontSize(8)
+            .setItalic()
+            .setFontColor(GRAY_DARK)
+            .setTextAlignment(TextAlignment.CENTER)
+            .setMarginTop(10));
+        
+        document.add(new Paragraph("Ce document est un relevé officiel de vos opérations bancaires. " +
+            "Pour toute réclamation, veuillez contacter votre agence dans un délai de 30 jours.")
+            .setFontSize(7)
+            .setFontColor(GRAY_DARK)
+            .setTextAlignment(TextAlignment.CENTER));
     }
 }

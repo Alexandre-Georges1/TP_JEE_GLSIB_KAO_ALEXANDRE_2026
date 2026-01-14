@@ -307,18 +307,6 @@ button {
   animation: slideIn 0.3s ease;
 }
 
-.toast.success {
-  border-left: 4px solid var(--success);
-}
-
-.toast.error {
-  border-left: 4px solid var(--danger);
-}
-
-.toast.warning {
-  border-left: 4px solid var(--warning);
-}
-
 /* Loading Skeleton */
 .skeleton {
   background: linear-gradient(90deg, var(--bg-secondary) 25%, var(--border) 50%, var(--bg-secondary) 75%);

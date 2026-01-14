@@ -6,7 +6,6 @@
       </a>
       <div class="header-content">
         <h1>{{ client.prenom }} {{ client.nom }}</h1>
-        <span class="client-id">{{ client.id }}</span>
       </div>
       <div class="header-actions">
         <a [routerLink]="['/dashboard/clients', client.id, 'edit']" class="btn btn-secondary">
@@ -133,19 +132,19 @@
 
               <div class="account-actions">
                 <a [routerLink]="['/dashboard/transactions/new']" [queryParams]="{compte: selectedCompte.numeroCompte, type: 'DEPOT'}" class="btn btn-success btn-sm">
-                  <i class="fas fa-plus"></i> Dépôt
+                  Dépôt
                 </a>
                 <a [routerLink]="['/dashboard/transactions/new']" [queryParams]="{compte: selectedCompte.numeroCompte, type: 'RETRAIT'}" class="btn btn-warning btn-sm">
-                  <i class="fas fa-minus"></i> Retrait
+                Retrait
                 </a>
                 <a [routerLink]="['/dashboard/transactions/new']" [queryParams]="{compte: selectedCompte.numeroCompte, type: 'VIREMENT'}" class="btn btn-primary btn-sm">
-                  <i class="fas fa-exchange-alt"></i> Virement
+                  Virement
                 </a>
                 <button class="btn btn-info btn-sm" (click)="toggleReleveSection()">
-                  <i class="fas fa-file-invoice"></i> Relevé
+                  Relevé
                 </button>
                 <button class="btn btn-danger btn-sm" (click)="confirmDeleteCompte(selectedCompte)">
-                  <i class="fas fa-trash"></i> Supprimer
+                  Supprimer
                 </button>
               </div>
 

@@ -345,9 +345,7 @@
   background: var(--bg-secondary);
 }
 
-.transaction-item.depot {
-  border-left-color: var(--success);
-}
+
 
 
 

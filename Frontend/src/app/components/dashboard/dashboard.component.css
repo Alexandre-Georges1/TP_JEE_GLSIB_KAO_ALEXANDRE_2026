@@ -56,24 +56,9 @@
   height: 4px;
 }
 
-.stat-card.clients::before {
-  background: linear-gradient(90deg, #22c55e, #16a34a);
-}
 
-.stat-card.comptes::before {
-  background: linear-gradient(90deg, #22c55e, #16a34a);
-}
-
-.stat-card.solde::before {
-  background: linear-gradient(90deg, #10b981, #14b8a6);
-}
-
-.stat-card.transactions::before {
-  background: linear-gradient(90deg, #f59e0b, #f97316);
-}
 
 .stat-card:hover {
-  transform: translateY(-4px);
   box-shadow: var(--shadow-lg);
 }
 
