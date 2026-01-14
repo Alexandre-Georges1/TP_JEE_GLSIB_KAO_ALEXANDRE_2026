@@ -5,8 +5,11 @@ NOM: KAO ALEXANDRE GEORGES ESSOWEDEOU
 Ce projet contient à la fois le backend et le frontend 
 
 Stack utilisé:
+
 Frontend : Angular js
+
 Backend: Springboot
+
 Base de donnée : Base de donnée en mémoire de SpringBoot
 
 
