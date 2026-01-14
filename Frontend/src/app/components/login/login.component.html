@@ -1,0 +1,106 @@
+<div class="login-page">
+  <div class="login-container">
+    <!-- Logo et titre -->
+    <div class="login-header">
+      <img src="logo.png" alt="EgaBank Logo" class="login-logo">
+      <p>Bienvenue sur votre espace bancaire sécurisé</p>
+    </div>
+
+    <!-- Sélecteur de type de connexion -->
+    <div class="login-type-selector">
+      <button 
+        class="type-btn" 
+        [class.active]="loginType() === 'CLIENT'"
+        (click)="setLoginType('CLIENT')">
+        <i class="fas fa-user"></i>
+        <span>Client</span>
+      </button>
+      <button 
+        class="type-btn" 
+        [class.active]="loginType() === 'ADMIN'"
+        (click)="setLoginType('ADMIN')">
+        <i class="fas fa-user-shield"></i>
+        <span>Administrateur</span>
+      </button>
+    </div>
+
+    <!-- Formulaire de connexion -->
+    <form class="login-form" (ngSubmit)="onSubmit()">
+      @if (errorMessage()) {
+        <div class="error-banner">
+          <i class="fas fa-exclamation-circle"></i>
+          <span>{{ errorMessage() }}</span>
+        </div>
+      }
+
+      @if (loginType() === 'CLIENT') {
+        <!-- Connexion Client -->
+        <div class="form-group">
+          <label for="numeroCompte">
+            <i class="fas fa-credit-card"></i>
+            Numéro de compte
+          </label>
+          <input 
+            type="text" 
+            id="numeroCompte" 
+            [ngModel]="numeroCompte()" 
+            (ngModelChange)="numeroCompte.set($event)"
+            name="numeroCompte"
+            placeholder="Entrez votre numéro de compte"
+            required>
+        </div>
+        <div class="form-group">
+          <label for="password">
+            <i class="fas fa-lock"></i>
+            Mot de passe
+          </label>
+          <div class="password-input-wrapper">
+            <input 
+              [type]="showPassword() ? 'text' : 'password'" 
+              id="password" 
+              [ngModel]="password()" 
+              (ngModelChange)="password.set($event)"
+              name="password"
+              placeholder="Entrez votre mot de passe"
+              required>
+            <button type="button" class="toggle-password" (click)="togglePassword()" aria-label="Afficher/masquer le mot de passe">
+              <i class="fas" [class.fa-eye]="!showPassword()" [class.fa-eye-slash]="showPassword()"></i>
+            </button>
+          </div>
+        </div>
+      } @else {
+        
+        <!-- Connexion Admin -->
+        <div class="form-group">
+          <label for="codeAdmin">
+            <i class="fas fa-key"></i>
+            Code administrateur
+          </label>
+          <div class="password-input-wrapper">
+            <input 
+              [type]="showAdminPassword() ? 'text' : 'password'" 
+              id="codeAdmin" 
+              [ngModel]="codeAdmin()" 
+              (ngModelChange)="codeAdmin.set($event)"
+              name="codeAdmin"
+              placeholder="Entrez le code administrateur"
+              required>
+            <button type="button" class="toggle-password" (click)="toggleAdminPassword()" aria-label="Afficher/masquer le mot de passe">
+              <i class="fas" [class.fa-eye]="!showAdminPassword()" [class.fa-eye-slash]="showAdminPassword()"></i>
+            </button>
+          </div>
+        </div>
+      }
+
+      <button type="submit" class="login-btn" [disabled]="isLoading()">
+        @if (isLoading()) {
+          <i class="fas fa-spinner fa-spin"></i>
+          <span>Connexion en cours...</span>
+        } @else {
+          <i class="fas fa-sign-in-alt"></i>
+          <span>Se connecter</span>
+        }
+      </button>
+    </form>
+  </div>
+</div>
