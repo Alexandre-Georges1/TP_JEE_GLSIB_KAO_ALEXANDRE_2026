@@ -73,8 +73,8 @@ export class TransactionService {
   }
 
   // Méthode pour effectuer un dépôt
-  deposer(compteId: number, montant: number): Observable<{ success: boolean; message: string }> {
-    const body: DeposerRetirerRequest = { montant };
+  deposer(compteId: number, montant: number, origineFonds: string): Observable<{ success: boolean; message: string }> {
+    const body: DeposerRetirerRequest = { montant, origineFonds };
     return this.http.post(`${this.apiUrl}/${compteId}/deposer`, body).pipe(
       tap(() => {
         this.compteService.refreshComptes();
@@ -124,7 +124,7 @@ export class TransactionService {
   effectuerTransaction(data: TransactionFormData): Observable<{ success: boolean; message: string }> {
     switch (data.type) {
       case 'DEPOT':
-        return this.deposer(data.compteId, data.montant);
+        return this.deposer(data.compteId, data.montant, data.origineFonds || '');
       case 'RETRAIT':
         return this.retirer(data.compteId, data.montant);
       case 'VIREMENT':

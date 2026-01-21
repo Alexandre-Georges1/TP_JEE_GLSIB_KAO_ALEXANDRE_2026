@@ -65,12 +65,16 @@ public class CompteService implements IcompteService {
         compteRepository.deleteById(id);
     }
 
-    public void deposer(Long id, Integer montant) {
+    public void deposer(Long id, Integer montant, String origineFonds) {
         Compte compte = compteRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Compte introuvable"));
 
         if (montant == null || montant <= 0) {
             throw new IllegalArgumentException("Montant de dépôt invalide");
+        }
+        
+        if (origineFonds == null || origineFonds.trim().isEmpty()) {
+            throw new IllegalArgumentException("L'origine des fonds est obligatoire pour un dépôt");
         }
 
         Integer soldeAvant = compte.getSolde();
@@ -80,15 +84,15 @@ public class CompteService implements IcompteService {
         compteRepository.save(compte);
 
 
-        Transaction transaction = new Transaction(
-                null,
-                LocalDateTime.now(),
-                "DEPOT",
-                soldeAvant,
-                soldeApres,
-                montant,
-                compte
-        );
+        Transaction transaction = new Transaction();
+        transaction.setDateTransaction(LocalDateTime.now());
+        transaction.setType("DEPOT");
+        transaction.setMontantAvant(soldeAvant);
+        transaction.setMontantApres(soldeApres);
+        transaction.setMontant(montant);
+        transaction.setOrigineFonds(origineFonds);
+        transaction.setCompte(compte);
+        
         transactionRepository.save(transaction);
     }
 
@@ -110,22 +114,41 @@ public class CompteService implements IcompteService {
         compte.setSolde(soldeApres);
         compteRepository.save(compte);
 
-        Transaction transaction = new Transaction(
-                null,
-                LocalDateTime.now(),
-                "RETRAIT",
-                soldeAvant,
-                soldeApres,
-                montant,
-                compte
-        );
+        Transaction transaction = new Transaction();
+        transaction.setDateTransaction(LocalDateTime.now());
+        transaction.setType("RETRAIT");
+        transaction.setMontantAvant(soldeAvant);
+        transaction.setMontantApres(soldeApres);
+        transaction.setMontant(montant);
+        transaction.setOrigineFonds(null); 
+        transaction.setCompte(compte);
+        
         transactionRepository.save(transaction);
     }
 
     @Transactional
     public void transferer(Long id, Integer montant, Long id2) {
         retirer(id, montant);
-        deposer(id2, montant);
+
+        Compte compteDestination = compteRepository.findById(id2)
+                .orElseThrow(() -> new RuntimeException("Compte destination introuvable"));
+
+        Integer soldeAvant = compteDestination.getSolde();
+        Integer soldeApres = soldeAvant + montant;
+
+        compteDestination.setSolde(soldeApres);
+        compteRepository.save(compteDestination);
+
+        Transaction transaction = new Transaction();
+        transaction.setDateTransaction(LocalDateTime.now());
+        transaction.setType("VIREMENT_RECU");
+        transaction.setMontantAvant(soldeAvant);
+        transaction.setMontantApres(soldeApres);
+        transaction.setMontant(montant);
+        transaction.setOrigineFonds(null); 
+        transaction.setCompte(compteDestination);
+        
+        transactionRepository.save(transaction);
     }
 
     public Compte updateCompte(Long id, Compte compteModifie) {

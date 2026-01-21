@@ -11,6 +11,9 @@ export interface Transaction {
   montantApres: number;
   montant: number;
   
+  // Origine des fonds (pour les dépôts)
+  origineFonds?: string;
+  
   // Relations (optionnelles car @JsonBackReference)
   compte?: Compte;
   
@@ -25,9 +28,11 @@ export interface TransactionFormData {
   type: TypeTransaction;
   montant: number;
   compteDestinationId?: number;
+  origineFonds?: string;
 }
 export interface DeposerRetirerRequest {
   montant: number;
+  origineFonds?: string;
 }
 export interface TransfererRequest {
   montant: number;

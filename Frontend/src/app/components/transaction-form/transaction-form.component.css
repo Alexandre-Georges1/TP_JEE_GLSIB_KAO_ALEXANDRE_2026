@@ -249,6 +249,17 @@
   color: var(--danger);
 }
 
+.field-hint {
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.field-hint i {
+  margin-right: 0.25rem;
+}
+
 /* Compte Preview */
 .compte-preview {
   background: var(--bg-secondary);

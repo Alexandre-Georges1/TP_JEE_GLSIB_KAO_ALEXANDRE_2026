@@ -34,12 +34,12 @@ import java.util.List;
 public class ReleveService {
     
     // Couleurs de la charte graphique EGABANK
-    private static final DeviceRgb PRIMARY_COLOR = new DeviceRgb(22, 163, 74);    // Vert principal #16a34a
-    private static final DeviceRgb SECONDARY_COLOR = new DeviceRgb(20, 83, 45);   // Vert foncé #14532d
-    private static final DeviceRgb SUCCESS_COLOR = new DeviceRgb(22, 163, 74);    // Vert
-    private static final DeviceRgb DANGER_COLOR = new DeviceRgb(220, 38, 38);     // Rouge
-    private static final DeviceRgb GRAY_LIGHT = new DeviceRgb(243, 244, 246);     // Gris clair
-    private static final DeviceRgb GRAY_DARK = new DeviceRgb(107, 114, 128);      // Gris foncé
+    private static final DeviceRgb PRIMARY_COLOR = new DeviceRgb(22, 163, 74);    
+    private static final DeviceRgb SECONDARY_COLOR = new DeviceRgb(20, 83, 45);   
+    private static final DeviceRgb SUCCESS_COLOR = new DeviceRgb(22, 163, 74);    
+    private static final DeviceRgb DANGER_COLOR = new DeviceRgb(220, 38, 38);     
+    private static final DeviceRgb GRAY_LIGHT = new DeviceRgb(243, 244, 246);     
+    private static final DeviceRgb GRAY_DARK = new DeviceRgb(107, 114, 128);      
     
     private final CompteRepository compteRepository;
     private final TransactionRepository transactionRepository;
@@ -145,7 +145,6 @@ public class ReleveService {
             logoCell.setTextAlignment(TextAlignment.CENTER);
             
             try {
-                // Charger le logo depuis les ressources
                 ClassPathResource logoResource = new ClassPathResource("static/logo.png");
                 if (logoResource.exists()) {
                     InputStream logoStream = logoResource.getInputStream();
@@ -157,7 +156,6 @@ public class ReleveService {
                     logo.setHorizontalAlignment(com.itextpdf.layout.properties.HorizontalAlignment.CENTER);
                     logoCell.add(logo);
                 } else {
-                    // Logo texte si l'image n'existe pas
                     logoCell.add(new Paragraph("EGABANK")
                         .setBold()
                         .setFontSize(32)
@@ -165,7 +163,6 @@ public class ReleveService {
                         .setTextAlignment(TextAlignment.CENTER));
                 }
             } catch (Exception e) {
-                // Fallback: logo texte
                 logoCell.add(new Paragraph("EGABANK")
                     .setBold()
                     .setFontSize(32)
@@ -175,14 +172,12 @@ public class ReleveService {
             logoTable.addCell(logoCell);
             document.add(logoTable);
             
-            // Informations de la banque centrées sous le logo
             document.add(new Paragraph("Siège Social: Lomé, Togo | Tél: +228 91 18 12 81 | Email: contact@egabank.tg")
                 .setFontSize(9)
                 .setFontColor(GRAY_DARK)
                 .setTextAlignment(TextAlignment.CENTER)
                 .setMarginTop(5));
             
-            // Ligne de séparation
             Table separatorLine = new Table(1);
             separatorLine.setWidth(UnitValue.createPercentValue(100));
             separatorLine.addCell(new Cell()
@@ -193,7 +188,6 @@ public class ReleveService {
             document.add(separatorLine);
             
         } catch (Exception e) {
-            // En cas d'erreur, afficher un en-tête simple
             document.add(new Paragraph("EGABANK")
                 .setBold()
                 .setFontSize(24)
@@ -203,13 +197,11 @@ public class ReleveService {
     }
     
     private void addAccountInfoSection(Document document, Compte compte) {
-        // Boîte d'information du compte
         Table infoBox = new Table(2);
         infoBox.setWidth(UnitValue.createPercentValue(100));
         infoBox.setBackgroundColor(GRAY_LIGHT);
         infoBox.setBorder(new SolidBorder(PRIMARY_COLOR, 1));
         
-        // Colonne gauche
         Cell leftCell = new Cell().setBorder(Border.NO_BORDER).setPadding(15);
         leftCell.add(new Paragraph("TITULAIRE DU COMPTE")
             .setFontSize(8)
@@ -224,7 +216,6 @@ public class ReleveService {
             .setFontColor(GRAY_DARK));
         infoBox.addCell(leftCell);
         
-        // Colonne droite
         Cell rightCell = new Cell().setBorder(Border.NO_BORDER).setPadding(15);
         rightCell.add(new Paragraph("NUMÉRO DE COMPTE")
             .setFontSize(8)
@@ -409,7 +400,6 @@ public class ReleveService {
     private void addFooter(Document document, DateTimeFormatter dateFormatter) {
         document.add(new Paragraph("\n"));
         
-        // Ligne de séparation
         Table separatorLine = new Table(1);
         separatorLine.setWidth(UnitValue.createPercentValue(100));
         separatorLine.addCell(new Cell()
@@ -417,8 +407,7 @@ public class ReleveService {
             .setBackgroundColor(GRAY_LIGHT)
             .setBorder(Border.NO_BORDER));
         document.add(separatorLine);
-        
-        // Informations de pied de page
+
         document.add(new Paragraph("Document généré automatiquement le " + 
             LocalDate.now().format(dateFormatter) + " par EGABANK")
             .setFontSize(8)

@@ -61,19 +61,32 @@ export class TransactionFormComponent implements OnInit, OnDestroy {
       compteId: [null, [Validators.required]],
       type: ['DEPOT', [Validators.required]],
       montant: [null, [Validators.required, Validators.min(0.01)]],
-      compteDestinationId: [null]
+      compteDestinationId: [null],
+      origineFonds: ['']
     });
 
-    // Ajouter la validation conditionnelle pour le virement
+    // Ajouter la validation conditionnelle pour le virement et l'origine des fonds
     this.transactionForm.get('type')?.valueChanges.subscribe(type => {
       const compteDestinationControl = this.transactionForm.get('compteDestinationId');
+      const origineFondsControl = this.transactionForm.get('origineFonds');
+      
       if (type === 'VIREMENT') {
         compteDestinationControl?.setValidators([Validators.required]);
+        origineFondsControl?.clearValidators();
+      } else if (type === 'DEPOT') {
+        compteDestinationControl?.clearValidators();
+        origineFondsControl?.setValidators([Validators.required]);
       } else {
         compteDestinationControl?.clearValidators();
+        origineFondsControl?.clearValidators();
       }
       compteDestinationControl?.updateValueAndValidity();
+      origineFondsControl?.updateValueAndValidity();
     });
+    
+    // Déclencher la validation initiale pour le type DEPOT
+    this.transactionForm.get('origineFonds')?.setValidators([Validators.required]);
+    this.transactionForm.get('origineFonds')?.updateValueAndValidity();
   }
 
   private loadComptes(): void {
@@ -110,7 +123,8 @@ export class TransactionFormComponent implements OnInit, OnDestroy {
       compteId: formValue.compteId,
       type: formValue.type,
       montant: formValue.montant,
-      compteDestinationId: formValue.compteDestinationId
+      compteDestinationId: formValue.compteDestinationId,
+      origineFonds: formValue.origineFonds
     };
 
     this.transactionService.effectuerTransaction(transactionData).subscribe({
@@ -157,6 +171,10 @@ export class TransactionFormComponent implements OnInit, OnDestroy {
 
   get isVirement(): boolean {
     return this.transactionForm.get('type')?.value === 'VIREMENT';
+  }
+
+  get isDepot(): boolean {
+    return this.transactionForm.get('type')?.value === 'DEPOT';
   }
 
   ngOnDestroy(): void {

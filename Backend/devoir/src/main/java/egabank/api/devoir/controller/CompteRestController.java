@@ -30,8 +30,10 @@ public class CompteRestController {
         compteService.deleteCompte(id);
     }
     @PostMapping("/comptes/{id}/deposer")
-    public void deposer(@PathVariable Long id,  @RequestBody  Map<String, Integer> body) {
-        compteService.deposer(id, body.get("montant"));
+    public void deposer(@PathVariable Long id,  @RequestBody  Map<String, Object> body) {
+        Integer montant = (Integer) body.get("montant");
+        String origineFonds = (String) body.get("origineFonds");
+        compteService.deposer(id, montant, origineFonds);
     }
     @PostMapping("/comptes/{id}/retirer")
     public void retirer(@PathVariable Long id,  @RequestBody  Map<String, Integer> body) {

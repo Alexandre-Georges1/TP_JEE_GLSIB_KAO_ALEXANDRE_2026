@@ -24,6 +24,7 @@ public class Transaction {
     private Integer montantAvant;
     private Integer montantApres;
     private Integer montant;
+    private String origineFonds;
 
     @ManyToOne
     @JoinColumn(name = "compte_id")

@@ -23,6 +23,7 @@ export class ClientTransactionComponent implements OnInit {
   montant = signal<number>(0);
   compteDestination = signal<string>('');
   destinataireInfo = signal<Compte | null>(null);
+  origineFonds = signal<string>('');
   
   isLoading = signal(false);
   errorMessage = signal('');
@@ -63,6 +64,7 @@ export class ClientTransactionComponent implements OnInit {
     this.transactionType.set(type);
     this.errorMessage.set('');
     this.successMessage.set('');
+    this.origineFonds.set('');
   }
 
   onCompteDestinationChange(numeroCompte: string): void {
@@ -94,6 +96,11 @@ onSubmit(): void {
     return;
   }
 
+  if (this.transactionType() === 'DEPOT' && !this.origineFonds().trim()) {
+    this.errorMessage.set('Veuillez indiquer l\'origine des fonds');
+    return;
+  }
+
   this.isLoading.set(true);
   this.errorMessage.set('');
   this.successMessage.set('');
@@ -116,7 +123,8 @@ onSubmit(): void {
     compteId: compte.id,
     type: this.transactionType(),
     montant: this.montant(),
-    compteDestinationId: compteDestinationId
+    compteDestinationId: compteDestinationId,
+    origineFonds: this.transactionType() === 'DEPOT' ? this.origineFonds() : undefined
   };
 
   this.transactionService.effectuerTransaction(formData).subscribe(result => {
@@ -128,6 +136,7 @@ onSubmit(): void {
       });
       this.montant.set(0);
       this.compteDestination.set('');
+      this.origineFonds.set('');
     } else {
       this.errorMessage.set(result.message);
     }

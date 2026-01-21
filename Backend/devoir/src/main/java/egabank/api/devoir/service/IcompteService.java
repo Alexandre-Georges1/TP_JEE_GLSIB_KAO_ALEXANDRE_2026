@@ -8,7 +8,7 @@ public interface IcompteService {
     public Compte getOneCompte(Long id);
     public Compte saveCompte(Compte compte);
     public void deleteCompte(Long id);
-    public void deposer(Long id, Integer montant);
+    public void deposer(Long id, Integer montant, String origineFonds);
     public void retirer(Long id, Integer montant);
     public void transferer(Long id, Integer montant, Long id2);
     public Compte updateCompte(Long id, Compte compteModifie);
