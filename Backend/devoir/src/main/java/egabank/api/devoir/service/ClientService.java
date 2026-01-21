@@ -20,6 +20,13 @@ public class ClientService implements IclientService {
     }
     @Override
     public Client saveClient(Client client) {
+        if (client.getId() != null) {
+            Client existingClient = clientRepository.findById(client.getId()).orElse(null);
+            if (existingClient != null && client.getComptes() == null) {
+                client.setComptes(existingClient.getComptes());
+            }
+        }
+        
         if (client.getNom() != null) {
             client.setNom(client.getNom().toUpperCase());
         }

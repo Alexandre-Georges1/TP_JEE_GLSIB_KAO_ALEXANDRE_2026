@@ -65,13 +65,13 @@
         <select id="filterCompte" [(ngModel)]="selectedCompte" (change)="onFilterChange()" title="Filtrer par compte">
           <option value="">Tous les comptes</option>
           @for (compte of comptes; track compte.numeroCompte) {
-            <option [value]="compte.numeroCompte">
-              {{ compte.numeroCompte }} - {{ compte.clientPrenom }} {{ compte.clientNom }}
-            </option>
+          <option [value]="compte.numeroCompte">
+            {{ compte.numeroCompte }} - {{ compte.clientPrenom }} {{ compte.clientNom }}
+          </option>
           }
         </select>
       </div>
-      
+
       <div class="filter-group">
         <label for="filterType"><i class="fas fa-tag"></i> Type</label>
         <select id="filterType" [(ngModel)]="selectedType" (change)="onFilterChange()" title="Filtrer par type">
@@ -81,75 +81,85 @@
           <option value="VIREMENT">Virements</option>
         </select>
       </div>
-      
+
       <div class="filter-group">
         <label for="filterDateDebut"><i class="fas fa-calendar"></i> Date Début</label>
         <input type="date" id="filterDateDebut" [(ngModel)]="dateDebut" (change)="onDateChange()" title="Date de début">
       </div>
-      
+
       <div class="filter-group">
         <label for="filterDateFin"><i class="fas fa-calendar"></i> Date Fin</label>
         <input type="date" id="filterDateFin" [(ngModel)]="dateFin" (change)="onDateChange()" title="Date de fin">
       </div>
+
+      <button class="btn btn-outline clear-btn" (click)="clearFilters()">
+        <i class="fas fa-times"></i>
+        Effacer
+      </button>
     </div>
   </div>
 
   <!-- Liste des Transactions -->
   <div class="transactions-container">
     @if (filteredTransactions.length > 0) {
-      <div class="transactions-list">
-        @for (txn of filteredTransactions; track txn.id) {
-          <div class="transaction-card" [class.depot]="txn.type === 'DEPOT'" [class.retrait]="txn.type === 'RETRAIT'" [class.virement]="txn.type === 'VIREMENT' || txn.type === 'TRANSFERT'">
-            <div class="txn-icon">
-              <i class="fas" [class]="getTransactionIcon(txn.type)"></i>
-            </div>
-            
-            <div class="txn-main">
-              <div class="txn-header">
-                <span class="txn-type">{{ txn.type }}</span>
-                <span class="txn-id">#{{ txn.id }}</span>
-              </div>
-              <p class="txn-description">Solde: {{ txn.montantAvant | number:'1.2-2' }} FCFA → {{ txn.montantApres | number:'1.2-2' }} FCFA</p>
-              <div class="txn-meta">
-                <span class="txn-date">
-                  <i class="fas fa-clock"></i>
-                  {{ txn.dateTransaction | date:'dd/MM/yyyy à HH:mm' }}
-                </span>
-                <span class="txn-compte">
-                  <i class="fas fa-credit-card"></i>
-                  {{ txn.numeroCompte }}
-                </span>
-              </div>
-            </div>
-            
-            <div class="txn-amounts">
-              <span class="txn-montant" [class.credit]="txn.type === 'DEPOT'" [class.debit]="txn.type !== 'DEPOT'">
-                {{ txn.type === 'DEPOT' ? '+' : '-' }}{{ txn.montant | number:'1.2-2' }} FCFA
-              </span>
-              <span class="txn-solde">
-                Solde: {{ txn.montantApres | number:'1.2-2' }} FCFA
-              </span>
-            </div>
+    <div class="transactions-list">
+      @for (txn of filteredTransactions; track txn.id) {
+      <div class="transaction-card" [class.depot]="txn.type === 'DEPOT'" [class.retrait]="txn.type === 'RETRAIT'"
+        [class.virement]="txn.type === 'VIREMENT' || txn.type === 'TRANSFERT' || txn.type === 'TRANSFER' || txn.type === 'VIREMENT_EMIS' || txn.type.includes('VIREMENT')">
+        <div class="txn-icon">
+          <i class="fas" [class]="getTransactionIcon(txn.type)"></i>
+        </div>
+
+        <div class="txn-main">
+          <div class="txn-header">
+            <span class="txn-type">{{ getTransactionLabel(txn.type) }}</span>
+            <span class="txn-id">#{{ txn.id }}</span>
           </div>
-        }
+          <p class="txn-description-detail">
+            {{ getTransactionDescription(txn) }}
+          </p>
+          <p class="txn-description">Solde: {{ txn.montantAvant | number:'1.2-2' }} FCFA → {{ txn.montantApres |
+            number:'1.2-2' }} FCFA</p>
+          <div class="txn-meta">
+            <span class="txn-date">
+              <i class="fas fa-clock"></i>
+              {{ txn.dateTransaction | date:'dd/MM/yyyy à HH:mm' }}
+            </span>
+            <span class="txn-compte">
+              <i class="fas fa-credit-card"></i>
+              {{ txn.numeroCompte }}
+            </span>
+          </div>
+        </div>
+
+        <div class="txn-amounts">
+          <span class="txn-montant" [class.credit]="txn.type === 'DEPOT'" [class.debit]="txn.type !== 'DEPOT'">
+            {{ txn.type === 'DEPOT' ? '+' : '-' }}{{ txn.montant | number:'1.2-2' }} FCFA
+          </span>
+          <span class="txn-solde">
+            Solde: {{ txn.montantApres | number:'1.2-2' }} FCFA
+          </span>
+        </div>
       </div>
+      }
+    </div>
     } @else {
-      <div class="empty-state">
-        <i class="fas fa-receipt"></i>
-        <h3>Aucune transaction trouvée</h3>
-        <p>
-          @if (selectedCompte || selectedType || dateDebut || dateFin) {
-            Aucune transaction ne correspond à vos critères de filtrage
-          } @else {
-            Aucune transaction n'a encore été effectuée
-          }
-        </p>
-        @if (!selectedCompte && !selectedType && !dateDebut && !dateFin) {
-          <a routerLink="/dashboard/transactions/new" class="btn btn-primary">
-            Effectuer une transaction
-          </a>
+    <div class="empty-state">
+      <i class="fas fa-receipt"></i>
+      <h3>Aucune transaction trouvée</h3>
+      <p>
+        @if (selectedCompte || selectedType || dateDebut || dateFin) {
+        Aucune transaction ne correspond à vos critères de filtrage
+        } @else {
+        Aucune transaction n'a encore été effectuée
         }
-      </div>
+      </p>
+      @if (!selectedCompte && !selectedType && !dateDebut && !dateFin) {
+      <a routerLink="/dashboard/transactions/new" class="btn btn-primary">
+        Effectuer une transaction
+      </a>
+      }
+    </div>
     }
   </div>
 </div>

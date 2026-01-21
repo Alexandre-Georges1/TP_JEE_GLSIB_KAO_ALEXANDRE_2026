@@ -144,4 +144,9 @@ export class ReleveService {
   getRelevePdfUrl(compteId: number, dateDebut: string, dateFin: string): string {
     return `${this.apiUrl}/api/releves/compte/${compteId}/pdf?dateDebut=${dateDebut}&dateFin=${dateFin}`;
   }
+
+  downloadRelevePdf(compteId: number, dateDebut: string, dateFin: string): Observable<Blob> {
+    const url = this.getRelevePdfUrl(compteId, dateDebut, dateFin);
+    return this.http.get(url, { responseType: 'blob' });
+  }
 }

@@ -5,6 +5,7 @@ import { Subscription } from 'rxjs';
 import { Client } from '../../models/client.model';
 import { Transaction } from '../../models/transaction.model';
 import { ClientService } from '../../services/client.service';
+import { Compte } from '../../models/compte.model';
 import { CompteService } from '../../services/compte.service';
 import { TransactionService } from '../../services/transaction.service';
 
@@ -27,6 +28,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   recentTransactions: Transaction[] = [];
   recentClients: Client[] = [];
+  comptes: Compte[] = [];
   private subscriptions = new Subscription();
 
   constructor(
@@ -38,6 +40,15 @@ export class DashboardComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.loadStats();
     this.loadRecentData();
+    this.loadComptes();
+  }
+
+  loadComptes(): void {
+    this.subscriptions.add(
+      this.compteService.getComptes().subscribe((comptes: Compte[]) => {
+        this.comptes = comptes;
+      })
+    );
   }
 
   loadStats(): void {
@@ -49,7 +60,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     );
 
     this.subscriptions.add(
-      this.compteService.getComptesCount().subscribe(counts => {
+      this.compteService.getComptesCount().subscribe((counts: any) => {
         this.stats.totalComptes = counts.total;
         this.stats.comptesEpargne = counts.epargne;
         this.stats.comptesCourant = counts.courant;
@@ -57,7 +68,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     );
 
     this.subscriptions.add(
-      this.compteService.getTotalSolde().subscribe(solde => {
+      this.compteService.getTotalSolde().subscribe((solde: number) => {
         this.stats.soldeTotal = solde;
       })
     );
@@ -83,6 +94,30 @@ export class DashboardComponent implements OnInit, OnDestroy {
       case 'RETRAIT': return 'fa-arrow-up';
       case 'VIREMENT': return 'fa-exchange-alt';
       default: return 'fa-circle';
+    }
+  }
+
+  getCompteInfo(numeroCompte: string): Compte | undefined {
+    return this.comptes.find(c => c.numeroCompte === numeroCompte);
+  }
+
+  getTransactionDescription(txn: Transaction): string {
+    const compte = this.getCompteInfo(txn.numeroCompte || '');
+    const clientName = compte ? `${compte.clientPrenom} ${compte.clientNom}` : 'Inconnu';
+    const numCompte = txn.numeroCompte || '????';
+
+    switch (txn.type) {
+      case 'DEPOT':
+        return `Dépôt sur le compte ${numCompte} (${clientName})`;
+      case 'RETRAIT':
+        return `Retrait du compte ${numCompte} (${clientName})`;
+      case 'VIREMENT':
+      case 'TRANSFERT':
+        const dest = this.getCompteInfo(txn.compteDestination || '');
+        const destName = dest ? `${dest.clientPrenom} ${dest.clientNom}` : 'Inconnu';
+        return `Virement de ${numCompte} (${clientName}) vers ${txn.compteDestination || '????'} (${destName})`;
+      default:
+        return `${txn.type} sur compte ${numCompte}`;
     }
   }
 

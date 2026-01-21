@@ -20,6 +20,10 @@ export class ClientService {
     }
   }
 
+  refreshClients(): void {
+    this.loadClients();
+  }
+
   private loadClients(): void {
     this.http.get<Client[]>(this.apiUrl).pipe(
       catchError(() => {
@@ -28,8 +32,9 @@ export class ClientService {
         return of([]);
       })
     ).subscribe(clients => {
+      this.clients$.next(clients);
       if (clients.length > 0) {
-        this.clients$.next(clients);
+        this.saveToStorage();
       }
     });
   }
@@ -61,6 +66,10 @@ export class ClientService {
     return this.clients$.pipe(
       map(clients => clients.find(c => c.id === id))
     );
+  }
+
+  getClient(id: number): Observable<Client> {
+    return this.http.get<Client>(`${this.apiUrl}/${id}`);
   }
 
   createClient(data: ClientFormData): Observable<Client> {
@@ -120,5 +129,20 @@ export class ClientService {
         c.courriel.toLowerCase().includes(term.toLowerCase())
       ))
     );
+  }
+
+  addCompteLocal(clientId: number, compte: any): void {
+    const current = this.clients$.value;
+    const clientIndex = current.findIndex(c => c.id === clientId);
+    if (clientIndex !== -1) {
+      const client = current[clientIndex];
+      const updatedClient = {
+        ...client,
+        comptes: client.comptes ? [...client.comptes, compte] : [compte]
+      };
+      current[clientIndex] = updatedClient;
+      this.clients$.next([...current]);
+      this.saveToStorage();
+    }
   }
 }

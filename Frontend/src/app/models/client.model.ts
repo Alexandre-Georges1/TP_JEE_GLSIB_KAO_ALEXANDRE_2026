@@ -12,6 +12,7 @@ export interface Client {
   tel: string;
   courriel: string;
   nationalite: string;
+  comptes?: any[];
 }
 
 export interface ClientFormData {

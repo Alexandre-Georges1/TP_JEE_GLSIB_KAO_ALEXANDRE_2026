@@ -29,10 +29,16 @@ public class Compte {
 
 
     @ManyToOne
-    @JoinColumn(name = "client_id") // clé étrangère
+    @JoinColumn(name = "client_id")
+    @com.fasterxml.jackson.annotation.JsonBackReference(value = "client-compte")
     private Client client;
 
+    @com.fasterxml.jackson.annotation.JsonProperty("clientId")
+    public Long getClientId() {
+        return client != null ? client.getId() : null;
+    }
+
     @OneToMany(mappedBy="compte", cascade = CascadeType.ALL)
-    @JsonManagedReference 
+    @com.fasterxml.jackson.annotation.JsonManagedReference(value = "compte-transaction") 
     List<Transaction> transactions;
 }

@@ -16,21 +16,31 @@ export class LoginComponent {
   loginType = signal<'CLIENT' | 'ADMIN'>('CLIENT');
   numeroCompte = signal('');
   password = signal('');
-  codeAdmin = signal('');
   errorMessage = signal('');
   isLoading = signal(false);
   showPassword = signal(false);
   showAdminPassword = signal(false);
 
-  private readonly CLIENT_PASSWORD = 'CLIENT2026';
+
 
   constructor(
     private authService: AuthService,
     private router: Router
   ) {
-    // Rediriger si déjà connecté
-    if (this.authService.isLoggedIn) {
-      this.redirectAfterLogin();
+    
+    if (typeof window !== 'undefined' && window.localStorage) {
+      // Vérifier si c'est une navigation directe vers /login (pas une redirection après login)
+      const urlParams = new URLSearchParams(window.location.search);
+      const forceLogin = urlParams.get('force') === 'true';
+      
+      if (forceLogin) {
+        // Forcer la déconnexion pour une connexion propre
+        localStorage.removeItem('egabank_user');
+        localStorage.removeItem('token');
+      } else if (this.authService.isLoggedIn) {
+        // Si déjà connecté et pas de force, rediriger
+        this.redirectAfterLogin();
+      }
     }
   }
 
@@ -51,23 +61,22 @@ export class LoginComponent {
     this.errorMessage.set('');
     this.isLoading.set(true);
 
-    // Vérifier le mot de passe client
-    if (this.loginType() === 'CLIENT' && this.password() !== this.CLIENT_PASSWORD) {
-      this.errorMessage.set('Mot de passe incorrect');
-      this.isLoading.set(false);
-      return;
+    let credentials: LoginCredentials;
+    if (this.loginType() === 'ADMIN') {
+      credentials = {
+        type: 'ADMIN',
+        password: this.password()
+      };
+    } else {
+      credentials = {
+        type: 'CLIENT',
+        numeroCompte: this.numeroCompte(),
+        password: this.password()
+      };
     }
-
-    const credentials: LoginCredentials = {
-      type: this.loginType(),
-      numeroCompte: this.numeroCompte(),
-      password: this.password(),
-      codeAdmin: this.codeAdmin()
-    };
 
     try {
       const result = await this.authService.login(credentials);
-      
       if (result.success) {
         this.redirectAfterLogin();
       } else {

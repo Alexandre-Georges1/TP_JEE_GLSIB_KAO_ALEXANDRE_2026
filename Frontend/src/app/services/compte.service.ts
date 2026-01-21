@@ -28,8 +28,10 @@ export class CompteService {
         return of([]);
       })
     ).subscribe(comptes => {
+      // Toujours mettre à jour le sujet, même si la liste est vide
+      this.comptes$.next(comptes);
       if (comptes.length > 0) {
-        this.comptes$.next(comptes);
+        this.saveToStorage();
       }
     });
   }
@@ -57,39 +59,55 @@ export class CompteService {
 
   getComptes(): Observable<Compte[]> {
     return combineLatest([this.comptes$, this.clientService.getClients()]).pipe(
-      map(([comptes, clients]) => {
-        return comptes.map(compte => {
-          const client = compte.client ? clients.find(c => c.id === compte.client!.id) : null;
+      map(([baseComptes, clients]) => {
+        // Optimisation : Créer une map pour rechercher les comptes par numéro rapidement
+        // Mais ici on veut surtout trouver le CLIENT pour chaque compte.
+        
+        return baseComptes.map(compte => {
+          // Chercher le client propriétaire de ce compte
+          // On suppose que l'objet Client contient une liste 'comptes' avec au moins l'ID ou le numéro
+          const proprietaire = clients.find(c => 
+            c.comptes && c.comptes.some((compteClient: any) => 
+              // Comparaison souple ID ou Numéro
+              String(compteClient.id) === String(compte.id) || 
+              compteClient.numeroCompte === compte.numeroCompte
+            )
+          );
+
+          if (proprietaire) {
+            return {
+              ...compte,
+              client: proprietaire,
+              clientNom: proprietaire.nom,
+              clientPrenom: proprietaire.prenom,
+              clientId: proprietaire.id // Ajout pour compatibilité
+            };
+          }
+
+          // Si pas de propriétaire trouvé (cas orphelin ou données incomplètes)
           return {
             ...compte,
-            clientNom: client?.nom || compte.client?.nom,
-            clientPrenom: client?.prenom || compte.client?.prenom
+            clientNom: 'Inconnu',
+            clientPrenom: 'Client'
           };
         });
       })
     );
   }
 
-  getComptesByClient(clientId: string): Observable<Compte[]> {
-    return this.comptes$.pipe(
-      map(comptes => comptes.filter(c => c.client?.id === parseInt(clientId, 10)))
+  getComptesByClient(clientId: string | number): Observable<Compte[]> {
+    const id = typeof clientId === 'string' ? parseInt(clientId, 10) : clientId;
+    return this.getComptes().pipe(
+      map(comptes => comptes.filter(c => {
+        const cId = c.client?.id || (c as any).clientId;
+        return String(cId) === String(id);
+      }))
     );
   }
 
   getCompteByNumero(numero: string): Observable<Compte | undefined> {
-    return combineLatest([this.comptes$, this.clientService.getClients()]).pipe(
-      map(([comptes, clients]) => {
-        const compte = comptes.find(c => c.numeroCompte === numero);
-        if (compte) {
-          const client = compte.client ? clients.find(c => c.id === compte.client!.id) : null;
-          return {
-            ...compte,
-            clientNom: client?.nom || compte.client?.nom,
-            clientPrenom: client?.prenom || compte.client?.prenom
-          };
-        }
-        return undefined;
-      })
+    return this.getComptes().pipe(
+      map(comptes => comptes.find(c => c.numeroCompte === numero))
     );
   }
 
@@ -98,13 +116,27 @@ export class CompteService {
       dateCreation: new Date(),
       typeCompte: data.typeCompte,
       solde: data.solde,
-      client: data.client
+      client: data.client,
+      clientId: data.clientId || data.client?.id
     };
 
     return this.http.post<Compte>(this.apiUrl, compteData).pipe(
       tap(compte => {
+        const enrichedCompte: Compte = {
+          ...compte,
+          client: data.client as any // On s'assure d'avoir l'objet client avec l'ID
+        };
         const current = this.comptes$.value;
-        this.comptes$.next([...current, compte]);
+        this.comptes$.next([...current, enrichedCompte]);
+        
+        // Mise à jour immédiate du client local pour garantir la cohérence
+        if (enrichedCompte.client?.id) {
+          this.clientService.addCompteLocal(enrichedCompte.client.id, enrichedCompte);
+        }
+
+        this.refreshComptes();
+        this.clientService.refreshClients();
+        
         this.saveToStorage();
       }),
       catchError(error => {

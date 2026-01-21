@@ -9,9 +9,9 @@ export interface Compte {
   dateCreation: Date;
   typeCompte: string;
   solde: number;
-  client?: Client;
+  client?: Client; // Rendu optionnel car absent du JSON Compte direct
   transactions?: Transaction[];
-  // Champs ajoutés pour affichage
+  // Champs ajoutés pour affichage frontend uniquement
   clientNom?: string;
   clientPrenom?: string;
 }
@@ -19,7 +19,8 @@ export interface Compte {
 export interface CompteFormData {
   typeCompte: string;
   solde: number;
-  client: {
+  client?: {
     id: number;
   };
+  clientId?: number;
 }

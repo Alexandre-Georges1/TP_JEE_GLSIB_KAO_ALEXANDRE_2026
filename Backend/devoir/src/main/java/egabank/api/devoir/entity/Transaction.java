@@ -27,7 +27,6 @@ public class Transaction {
 
     @ManyToOne
     @JoinColumn(name = "compte_id")
-    @JsonBackReference
+    @com.fasterxml.jackson.annotation.JsonBackReference(value = "compte-transaction")
     private Compte compte;
-
 }

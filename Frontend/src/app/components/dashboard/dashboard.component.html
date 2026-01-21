@@ -81,30 +81,31 @@
       </div>
       <div class="card-body">
         @if (recentTransactions.length > 0) {
-          <div class="transactions-list">
-            @for (txn of recentTransactions; track txn.id) {
-              <div class="transaction-item" [class.depot]="txn.type === 'DEPOT'" [class.retrait]="txn.type === 'RETRAIT'" [class.virement]="txn.type === 'VIREMENT'">
-                <div class="txn-icon">
-                  <i class="fas" [class]="getTransactionIcon(txn.type)"></i>
-                </div>
-                <div class="txn-info">
-                  <span class="txn-description">{{ txn.description }}</span>
-                  <span class="txn-date">{{ txn.dateTransaction | date:'dd/MM/yyyy HH:mm' }}</span>
-                </div>
-                <div class="txn-amount" [class.credit]="txn.type === 'DEPOT'" [class.debit]="txn.type !== 'DEPOT'">
-                  {{ txn.type === 'DEPOT' ? '+' : '-' }}{{ txn.montant | number:'1.2-2' }} FCFA
-                </div>
-              </div>
-            }
+        <div class="transactions-list">
+          @for (txn of recentTransactions; track txn.id) {
+          <div class="transaction-item" [class.depot]="txn.type === 'DEPOT'" [class.retrait]="txn.type === 'RETRAIT'"
+            [class.virement]="txn.type === 'VIREMENT'">
+            <div class="txn-icon">
+              <i class="fas" [class]="getTransactionIcon(txn.type)"></i>
+            </div>
+            <div class="txn-info">
+              <span class="txn-description">{{ getTransactionDescription(txn) }}</span>
+              <span class="txn-date">{{ txn.dateTransaction | date:'dd/MM/yyyy HH:mm' }}</span>
+            </div>
+            <div class="txn-amount" [class.credit]="txn.type === 'DEPOT'" [class.debit]="txn.type !== 'DEPOT'">
+              {{ txn.type === 'DEPOT' ? '+' : '-' }}{{ txn.montant | number:'1.2-2' }} FCFA
+            </div>
           </div>
+          }
+        </div>
         } @else {
-          <div class="empty-state">
-            <i class="fas fa-receipt"></i>
-            <p>Aucune transaction récente</p>
-            <a routerLink="/dashboard/transactions/new" class="btn btn-primary btn-sm">
-             Nouvelle transaction
-            </a>
-          </div>
+        <div class="empty-state">
+          <i class="fas fa-receipt"></i>
+          <p>Aucune transaction récente</p>
+          <a routerLink="/dashboard/transactions/new" class="btn btn-primary btn-sm">
+            <i class="fas fa-plus"></i> Nouvelle transaction
+          </a>
+        </div>
         }
       </div>
     </div>
@@ -117,28 +118,28 @@
       </div>
       <div class="card-body">
         @if (recentClients.length > 0) {
-          <div class="clients-list">
-            @for (client of recentClients; track client.id) {
-              <a [routerLink]="['/dashboard/clients', client.id]" class="client-item">
-                <div class="client-avatar" [class.male]="client.sexe === 'M'" [class.female]="client.sexe === 'F'">
-                  <i class="fas" [class.fa-mars]="client.sexe === 'M'" [class.fa-venus]="client.sexe === 'F'"></i>
-                </div>
-                <div class="client-info">
-                  <span class="client-name">{{ client.prenom }} {{ client.nom }}</span>
-                  <span class="client-email">{{ client.courriel }}</span>
-                </div>
-                <i class="fas fa-chevron-right"></i>
-              </a>
-            }
-          </div>
+        <div class="clients-list">
+          @for (client of recentClients; track client.id) {
+          <a [routerLink]="['/dashboard/clients', client.id]" class="client-item">
+            <div class="client-avatar" [class.male]="client.sexe === 'M'" [class.female]="client.sexe === 'F'">
+              <i class="fas" [class.fa-mars]="client.sexe === 'M'" [class.fa-venus]="client.sexe === 'F'"></i>
+            </div>
+            <div class="client-info">
+              <span class="client-name">{{ client.prenom }} {{ client.nom }}</span>
+              <span class="client-email">{{ client.courriel }}</span>
+            </div>
+            <i class="fas fa-chevron-right"></i>
+          </a>
+          }
+        </div>
         } @else {
-          <div class="empty-state">
-            <i class="fas fa-users"></i>
-            <p>Aucun client enregistré</p>
-            <a routerLink="/dashboard/clients/new" class="btn btn-primary btn-sm">
-             Nouveau client
-            </a>
-          </div>
+        <div class="empty-state">
+          <i class="fas fa-users"></i>
+          <p>Aucun client enregistré</p>
+          <a routerLink="/dashboard/clients/new" class="btn btn-primary btn-sm">
+            <i class="fas fa-plus"></i> Nouveau client
+          </a>
+        </div>
         }
       </div>
     </div>

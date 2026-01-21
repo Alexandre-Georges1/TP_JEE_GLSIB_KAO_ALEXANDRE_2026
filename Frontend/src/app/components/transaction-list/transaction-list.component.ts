@@ -162,4 +162,35 @@ export class TransactionListComponent implements OnInit {
     link.download = `transactions_${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
   }
+
+  getTransactionDescription(txn: Transaction): string {
+    const compte = this.getCompteInfo(txn.numeroCompte || '');
+    const clientName = compte ? `${compte.clientPrenom} ${compte.clientNom}` : 'Inconnu';
+    const numCompte = txn.numeroCompte || '????';
+
+    switch (txn.type) {
+      case 'DEPOT':
+        return `Dépôt sur le compte ${numCompte} (${clientName})`;
+      case 'RETRAIT':
+        return `Retrait du compte ${numCompte} (${clientName})`;
+      case 'VIREMENT':
+      case 'TRANSFERT':
+        const dest = this.getCompteInfo(txn.compteDestination || '');
+        const destName = dest ? `${dest.clientPrenom} ${dest.clientNom}` : 'Inconnu';
+        return `Virement de ${numCompte} (${clientName}) vers ${txn.compteDestination} (${destName})`;
+      default:
+        return `${txn.type} sur compte ${numCompte}`;
+    }
+  }
+  getTransactionLabel(type: string): string {
+    switch (type) {
+      case 'DEPOT': return 'Dépôt';
+      case 'RETRAIT': return 'Retrait';
+      case 'VIREMENT': return 'Virement';
+      case 'VIREMENT_RECU': return 'Virement Reçu';
+      case 'VIREMENT_EMIS': return 'Virement Émis';
+      case 'TRANSFERT': return 'Transfert';
+      default: return type;
+    }
+  }
 }

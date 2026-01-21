@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -24,6 +24,11 @@ export class ClientReleveComponent implements OnInit {
   loading = signal<boolean>(false);
   message = signal<{ text: string; type: 'success' | 'error' } | null>(null);
   today = new Date().toISOString();
+  
+  selectedCompte = computed(() => {
+    const id = this.selectedCompteId();
+    return this.comptes().find(c => c.id === id) || null;
+  });
 
   constructor(
     public authService: AuthService,
@@ -38,12 +43,40 @@ export class ClientReleveComponent implements OnInit {
 
   private loadComptes(): void {
     const user = this.authService.currentUser;
-    if (user?.clientId) {
-      this.compteService.getComptesByClient(user.clientId).subscribe(comptes => {
+    if (!user) return;
+
+    // 1. Essayer de charger par clientId pour avoir tous les comptes
+    const clientId = this.authService.getNumericClientId;
+    if (clientId) {
+      this.compteService.getComptesByClient(clientId).subscribe(comptes => {
         this.comptes.set(comptes);
-        // Sélectionner le premier compte par défaut
-        if (comptes.length > 0 && comptes[0].id) {
-          this.selectedCompteId.set(comptes[0].id);
+        
+        // Sélectionner le compte qui correspond au numéro du jeton (compte actuel)
+        if (comptes.length > 0 && !this.selectedCompteId()) {
+          const currentAccount = user.numeroCompte 
+            ? comptes.find(c => c.numeroCompte === user.numeroCompte) || comptes[0]
+            : comptes[0];
+          
+          if (currentAccount.id) {
+            this.selectedCompteId.set(currentAccount.id);
+          }
+        }
+      });
+    }
+
+    // 2. Fallback: Charger spécifiquement le compte actuel par son numéro
+    if (user.numeroCompte) {
+      this.compteService.getCompteByNumero(user.numeroCompte).subscribe(compte => {
+        if (compte) {
+          // Ajouter à la liste si pas déjà présent
+          const currentComptes = this.comptes();
+          if (!currentComptes.find(c => c.numeroCompte === compte.numeroCompte)) {
+            this.comptes.set([...currentComptes, compte]);
+          }
+          // Définir comme sélectionné s'il n'y en a pas encore
+          if (compte.id && !this.selectedCompteId()) {
+            this.selectedCompteId.set(compte.id);
+          }
         }
       });
     }
@@ -100,13 +133,30 @@ export class ClientReleveComponent implements OnInit {
       return;
     }
 
-    const url = this.releveService.getRelevePdfUrl(
+    this.loading.set(true);
+    this.showMessage('Préparation du PDF...', 'success');
+
+    this.releveService.downloadRelevePdf(
       this.selectedCompteId()!,
       this.dateDebut(),
       this.dateFin()
-    );
-    this.showMessage('Téléchargement du PDF en cours...', 'success');
-    window.open(url, '_blank');
+    ).subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `releve_${this.selectedCompte()?.numeroCompte}_${this.dateDebut()}_${this.dateFin()}.pdf`;
+        link.click();
+        window.URL.revokeObjectURL(url);
+        this.showMessage('Téléchargement réussi', 'success');
+        this.loading.set(false);
+      },
+      error: (error) => {
+        console.error('Erreur PDF:', error);
+        this.showMessage('Erreur lors du téléchargement du PDF', 'error');
+        this.loading.set(false);
+      }
+    });
   }
 
   imprimerReleve(): void {
@@ -153,13 +203,14 @@ export class ClientReleveComponent implements OnInit {
     return type === 'DEPOT' || type === 'VIREMENT_RECU';
   }
 
-  getTypeLabel(type: string): string {
+  getTransactionLabel(type: string): string {
     switch (type) {
       case 'DEPOT': return 'Dépôt';
       case 'RETRAIT': return 'Retrait';
-      case 'VIREMENT_RECU': return 'Virement reçu';
-      case 'VIREMENT_EMIS': return 'Virement émis';
       case 'VIREMENT': return 'Virement';
+      case 'VIREMENT_RECU': return 'Virement Reçu';
+      case 'VIREMENT_EMIS': return 'Virement Émis';
+      case 'TRANSFERT': return 'Transfert';
       default: return type;
     }
   }

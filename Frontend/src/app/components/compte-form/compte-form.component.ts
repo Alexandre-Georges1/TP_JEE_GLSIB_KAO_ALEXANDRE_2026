@@ -44,8 +44,7 @@ export class CompteFormComponent implements OnInit {
   private initForm(): void {
     this.compteForm = this.fb.group({
       clientId: ['', [Validators.required]],
-      typeCompte: ['COURANT', [Validators.required]],
-      solde: [0, [Validators.required, Validators.min(0)]]
+      typeCompte: ['COURANT', [Validators.required]]
     });
   }
 
@@ -67,10 +66,11 @@ export class CompteFormComponent implements OnInit {
     const formValue = this.compteForm.value;
     const compteData = {
       typeCompte: formValue.typeCompte,
-      solde: formValue.solde,
+      solde: 0,
       client: {
         id: parseInt(formValue.clientId, 10)
-      }
+      },
+      clientId: parseInt(formValue.clientId, 10)
     };
 
     this.compteService.createCompte(compteData).subscribe({

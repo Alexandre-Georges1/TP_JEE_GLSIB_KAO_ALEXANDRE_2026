@@ -1,10 +1,9 @@
-import { Injectable, PLATFORM_ID, inject } from '@angular/core';
-import { isPlatformBrowser } from '@angular/common';
+import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
-import { BehaviorSubject, Observable, firstValueFrom } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 import { User, LoginCredentials } from '../models/auth.model';
-import { CompteService } from './compte.service';
-import { ClientService } from './client.service';
+import { HttpClient } from '@angular/common/http';
+import { jwtDecode } from 'jwt-decode';
 
 @Injectable({
   providedIn: 'root'
@@ -12,18 +11,16 @@ import { ClientService } from './client.service';
 export class AuthService {
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
-  private platformId = inject(PLATFORM_ID);
 
-  private readonly ADMIN_CODE = 'EGABANK2026';
-  
   constructor(
     private router: Router,
-    private compteService: CompteService,
-    private clientService: ClientService
+    private http: HttpClient
   ) {
-    // L'utilisateur doit se connecter à chaque fois
-    if (isPlatformBrowser(this.platformId)) {
-      localStorage.removeItem('egabank_user');
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const user = localStorage.getItem('egabank_user');
+      if (user) {
+        this.currentUserSubject.next(JSON.parse(user));
+      }
     }
   }
 
@@ -43,68 +40,63 @@ export class AuthService {
     return this.currentUserSubject.value?.type === 'CLIENT';
   }
 
+  get getNumericClientId(): number | undefined {
+    const cid = this.currentUserSubject.value?.clientId;
+    return cid ? Number(cid) : undefined;
+  }
+
   async login(credentials: LoginCredentials): Promise<{ success: boolean; message: string }> {
+    let body: any;
+    // Pour l'admin : juste le mot de passe
     if (credentials.type === 'ADMIN') {
-      return this.loginAdmin(credentials.codeAdmin || '');
+      body = { password: credentials.password };
     } else {
-      return await this.loginClient(credentials.numeroCompte || '');
+      // Pour le client : username (numéro de compte) + mot de passe
+      body = { username: credentials.numeroCompte, password: credentials.password };
+    }
+    try {
+      const response: any = await this.http.post('http://localhost:8081/auth/login', body).toPromise();
+      if (response && response.token) {
+        localStorage.setItem('token', response.token);
+        // Décoder le token pour récupérer les infos utilisateur
+        const user: User = this.decodeUserFromToken(response.token);
+        this.setUser(user);
+        return { success: true, message: 'Connexion réussie' };
+      } else {
+        return { success: false, message: 'Identifiants invalides' };
+      }
+    } catch (e) {
+      return { success: false, message: 'Erreur lors de la connexion' };
     }
   }
 
-  private loginAdmin(code: string): { success: boolean; message: string } {
-    if (code === this.ADMIN_CODE) {
-      const user: User = {
-        id: 'admin',
-        type: 'ADMIN',
-        nom: 'Administrateur',
-        prenom: 'EgaBank'
-      };
-      this.setUser(user);
-      return { success: true, message: 'Connexion réussie' };
-    }
-    return { success: false, message: 'Code administrateur incorrect' };
-  }
-
-  private async loginClient(numeroCompte: string): Promise<{ success: boolean; message: string }> {
-    // Vérifier si le compte existe
-    const compte = await firstValueFrom(this.compteService.getCompteByNumero(numeroCompte));
-    
-    if (!compte) {
-      return { success: false, message: 'Numéro de compte invalide' };
-    }
-
-    // Récupérer les infos du client
-    const clientId = compte.client?.id;
-    if (!clientId) {
-      return { success: false, message: 'Client introuvable pour ce compte' };
-    }
-    const client = await firstValueFrom(this.clientService.getClientById(clientId));
-
-    const user: User = {
-      id: String(clientId),
-      type: 'CLIENT',
-      numeroCompte: compte.numeroCompte,
-      clientId: String(clientId),
-      nom: client?.nom || compte.clientNom,
-      prenom: client?.prenom || compte.clientPrenom
+  private decodeUserFromToken(token: string): User {
+    const decoded: any = jwtDecode(token);
+    return {
+      id: decoded.sub,
+      type: decoded.role,
+      numeroCompte: decoded.numeroCompte || (decoded.role === 'CLIENT' ? decoded.sub : undefined),
+      clientId: decoded.clientId,
+      nom: decoded.nom,
+      prenom: decoded.prenom
     };
-
-    this.setUser(user);
-    return { success: true, message: 'Connexion réussie' };
   }
+
+  // Suppression des anciennes méthodes loginAdmin et loginClient
 
   private setUser(user: User): void {
     this.currentUserSubject.next(user);
-    if (isPlatformBrowser(this.platformId)) {
+    if (typeof window !== 'undefined' && window.localStorage) {
       localStorage.setItem('egabank_user', JSON.stringify(user));
     }
   }
 
   logout(): void {
     this.currentUserSubject.next(null);
-    if (isPlatformBrowser(this.platformId)) {
+    if (typeof window !== 'undefined' && window.localStorage) {
       localStorage.removeItem('egabank_user');
+      localStorage.removeItem('token');
     }
-    this.router.navigate(['/login']);
+    this.router.navigate(['/login'], { queryParams: { force: 'true' } });
   }
 }

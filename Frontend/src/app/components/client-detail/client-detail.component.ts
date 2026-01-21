@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -9,6 +9,7 @@ import { ClientService } from '../../services/client.service';
 import { CompteService } from '../../services/compte.service';
 import { TransactionService } from '../../services/transaction.service';
 import { ReleveService, ReleveData } from '../../services/releve.service';
+import { Subscription, switchMap, tap } from 'rxjs';
 
 @Component({
   selector: 'app-client-detail',
@@ -17,7 +18,7 @@ import { ReleveService, ReleveData } from '../../services/releve.service';
   templateUrl: './client-detail.component.html',
   styleUrl: './client-detail.component.css'
 })
-export class ClientDetailComponent implements OnInit {
+export class ClientDetailComponent implements OnInit, OnDestroy {
   client: Client | null = null;
   comptes: Compte[] = [];
   transactions: Transaction[] = [];
@@ -25,6 +26,8 @@ export class ClientDetailComponent implements OnInit {
   showDeleteModal = false;
   showDeleteCompteModal = false;
   compteToDelete: Compte | null = null;
+  
+  private subscriptions = new Subscription();
 
   // Fonctionnalités de relevé
   dateDebut: string = '';
@@ -45,12 +48,65 @@ export class ClientDetailComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    const idParam = this.route.snapshot.paramMap.get('id');
-    if (idParam) {
-      const id = parseInt(idParam, 10);
-      this.loadClient(id);
-    }
     this.setDefaultDates();
+    
+    // Abonnement aux changements d'ID dans l'URL
+    this.subscriptions.add(
+      this.route.paramMap.pipe(
+        switchMap(params => {
+          const idParam = params.get('id');
+          if (!idParam) return [];
+          const id = parseInt(idParam, 10);
+          
+          // INITIE LA RÉCUPÉRATION DU CLIENT
+          // On souscrit séparément pour éviter de bloquer l'un par l'autre
+          this.subscribeToClient(id);
+          this.subscribeToComptes(id);
+          
+          return [];
+        })
+      ).subscribe()
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.subscriptions.unsubscribe();
+  }
+
+  private subscribeToClient(id: number): void {
+    // Si une souscription existe déjà pour le client, on pourrait vouloir la nettoyer, 
+    // mais ici on ajoute à la liste globale.
+    this.subscriptions.add(
+      this.clientService.getClientById(id).subscribe(client => {
+        if (client) {
+          this.client = client;
+        } else {
+          // Si on ne trouve pas le client, c'est peut-être qu'il n'est pas encore chargé ou n'existe pas
+          // On évite de rediriger trop vite si c'est juste un délai de chargement initial
+        }
+      })
+    );
+  }
+
+  private subscribeToComptes(clientId: number): void {
+    this.subscriptions.add(
+      this.compteService.getComptesByClient(String(clientId)).subscribe(comptes => {
+        this.comptes = comptes;
+        // Sélectionner le premier compte par défaut si aucun n'est sélectionné ou si la liste change
+        if (comptes.length > 0 && !this.selectedCompte) {
+          this.selectCompte(comptes[0]);
+        } else if (comptes.length > 0 && this.selectedCompte) {
+            // Vérifier si le compte sélectionné existe toujours
+            const exists = comptes.find(c => c.numeroCompte === this.selectedCompte?.numeroCompte);
+            if (!exists) {
+                this.selectCompte(comptes[0]);
+            } else {
+                // Mettre à jour les données du compte sélectionné (ex: solde)
+                this.selectedCompte = exists;
+            }
+        }
+      })
+    );
   }
 
   private setDefaultDates(): void {
@@ -66,31 +122,16 @@ export class ClientDetailComponent implements OnInit {
     return date.toISOString().split('T')[0];
   }
 
-  loadClient(id: number): void {
-    this.clientService.getClientById(id).subscribe(client => {
-      if (client) {
-        this.client = client;
-        this.loadComptes(id);
-      } else {
-        this.router.navigate(['/dashboard/clients']);
-      }
-    });
-  }
-
-  loadComptes(clientId: number): void {
-    this.compteService.getComptesByClient(String(clientId)).subscribe(comptes => {
-      this.comptes = comptes;
-      if (comptes.length > 0) {
-        this.selectCompte(comptes[0]);
-      }
-    });
-  }
+  // loadClient et loadComptes ne sont plus nécessaires sous cette forme, mais on garde la structure propre
+  // On supprime les anciennes méthodes pour éviter la confusion
 
   selectCompte(compte: Compte): void {
     this.selectedCompte = compte;
-    this.transactionService.getTransactionsByCompte(compte.numeroCompte).subscribe(txns => {
-      this.transactions = txns;
-    });
+    this.subscriptions.add(
+      this.transactionService.getTransactionsByCompte(compte.numeroCompte).subscribe(txns => {
+        this.transactions = txns;
+      })
+    );
   }
 
   getAge(dnaissance: Date): number {
@@ -147,7 +188,7 @@ export class ClientDetailComponent implements OnInit {
       this.compteService.deleteCompte(this.compteToDelete.numeroCompte);
       
       if (this.client) {
-        this.loadComptes(this.client.id);
+        // La mise à jour est automatique via l'observable
       }
       
       this.cancelDelete();
@@ -158,8 +199,31 @@ export class ClientDetailComponent implements OnInit {
     switch (type) {
       case 'DEPOT': return 'fa-arrow-down';
       case 'RETRAIT': return 'fa-arrow-up';
-      case 'VIREMENT': return 'fa-exchange-alt';
+      case 'VIREMENT': 
+      case 'TRANSFERT':
+      case 'TRANSFER':
+      case 'VIREMENT_EMIS':
+      case 'VIREMENT_RECU': return 'fa-exchange-alt';
       default: return 'fa-circle';
+    }
+  }
+
+  getTransactionDescription(txn: any): string {
+    const numCompte = txn.numeroCompte || this.selectedCompte?.numeroCompte || '????';
+    
+    switch (txn.type) {
+      case 'DEPOT':
+        return `Dépôt sur le compte ${numCompte}`;
+      case 'RETRAIT':
+        return `Retrait du compte ${numCompte}`;
+      case 'VIREMENT':
+      case 'TRANSFERT':
+      case 'TRANSFER':
+      case 'VIREMENT_EMIS':
+      case 'VIREMENT_RECU':
+        return `Virement vers ${txn.compteDestination || 'un autre compte'}`;
+      default:
+        return `${txn.type} sur compte ${numCompte}`;
     }
   }
 
@@ -222,13 +286,27 @@ export class ClientDetailComponent implements OnInit {
       return;
     }
 
-    const url = this.releveService.getRelevePdfUrl(
+    this.showReleveMessage('Téléchargement du PDF en cours...', 'success');
+    
+    this.releveService.downloadRelevePdf(
       compteId,
       this.dateDebut,
       this.dateFin
-    );
-    this.showReleveMessage('Téléchargement du PDF en cours...', 'success');
-    window.open(url, '_blank');
+    ).subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `releve_${compteId}_${this.dateFin}.pdf`;
+        link.click();
+        window.URL.revokeObjectURL(url);
+        this.showReleveMessage('Téléchargement terminé', 'success');
+      },
+      error: (error) => {
+        console.error('Erreur lors du téléchargement:', error);
+        this.showReleveMessage('Erreur lors du téléchargement du PDF', 'error');
+      }
+    });
   }
 
   imprimerReleve(): void {
@@ -275,13 +353,14 @@ export class ClientDetailComponent implements OnInit {
     return type === 'DEPOT' || type === 'VIREMENT_RECU';
   }
 
-  getTypeLabel(type: string): string {
+  getTransactionLabel(type: string): string {
     switch (type) {
       case 'DEPOT': return 'Dépôt';
       case 'RETRAIT': return 'Retrait';
-      case 'VIREMENT_RECU': return 'Virement reçu';
-      case 'VIREMENT_EMIS': return 'Virement émis';
       case 'VIREMENT': return 'Virement';
+      case 'VIREMENT_RECU': return 'Virement Reçu';
+      case 'VIREMENT_EMIS': return 'Virement Émis';
+      case 'TRANSFERT': return 'Transfert';
       default: return type;
     }
   }

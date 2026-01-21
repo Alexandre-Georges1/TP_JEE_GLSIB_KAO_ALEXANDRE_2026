@@ -150,6 +150,54 @@
   border-color: var(--primary);
 }
 
+.account-fixed-display {
+  padding: 0.75rem 1rem;
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  background: var(--background);
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+}
+
+.account-badge-display {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.account-badge-display i {
+  color: var(--primary);
+  font-size: 1.1rem;
+}
+
+.account-num {
+  font-weight: 700;
+  color: var(--text);
+  font-family: 'Courier New', Courier, monospace;
+  letter-spacing: 1px;
+}
+
+.account-type-badge {
+  margin-left: auto;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.2rem 0.6rem;
+  background: var(--primary);
+  color: white;
+  border-radius: 20px;
+  text-transform: uppercase;
+}
+
+.loading-mini {
+  color: var(--text-light);
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 /* ===== Boutons ===== */
 .btn-group {
   display: flex;
@@ -220,13 +268,13 @@
 .message.success {
   background: #d4edda;
   color: #155724;
-  
+  border-left: 4px solid var(--success);
 }
 
 .message.error {
   background: #f8d7da;
   color: #721c24;
-  
+  border-left: 4px solid var(--danger);
 }
 
 @keyframes slideIn {
