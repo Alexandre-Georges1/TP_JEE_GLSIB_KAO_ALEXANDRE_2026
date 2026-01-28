@@ -183,15 +183,21 @@ export class ClientDetailComponent implements OnInit, OnDestroy {
   }
 
   deleteCompte(): void {
-    if (this.compteToDelete) {
+    if (this.compteToDelete && this.compteToDelete.id) {
       this.transactionService.deleteTransactionsByCompte(this.compteToDelete.numeroCompte);
-      this.compteService.deleteCompte(this.compteToDelete.numeroCompte);
       
-      if (this.client) {
-        // La mise à jour est automatique via l'observable
-      }
-      
-      this.cancelDelete();
+      this.compteService.deleteCompte(this.compteToDelete.id).subscribe({
+        next: () => {
+          if (this.client) {
+            // Refresh client data to update the accounts list
+            this.clientService.refreshClients();
+          }
+          this.cancelDelete();
+        },
+        error: (err) => {
+          console.error('Erreur suppression compte', err);
+        }
+      });
     }
   }
 

@@ -101,10 +101,14 @@ export class CompteListComponent implements OnInit {
   }
 
   deleteCompte(): void {
-    if (this.compteToDelete) {
-      this.transactionService.deleteTransactionsByCompte(this.compteToDelete.numeroCompte);
-      this.compteService.deleteCompte(this.compteToDelete.numeroCompte);
-      this.cancelDelete();
+    if (this.compteToDelete && this.compteToDelete.id) {
+      this.compteService.deleteCompte(this.compteToDelete.id).subscribe({
+        next: () => {
+          this.transactionService.deleteTransactionsByCompte(this.compteToDelete!.numeroCompte);
+          this.cancelDelete();
+        },
+        error: (err) => console.error('Erreur suppression compte', err)
+      });
     }
   }
 }

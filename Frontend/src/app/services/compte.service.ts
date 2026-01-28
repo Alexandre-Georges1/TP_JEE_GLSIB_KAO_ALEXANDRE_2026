@@ -60,12 +60,8 @@ export class CompteService {
   getComptes(): Observable<Compte[]> {
     return combineLatest([this.comptes$, this.clientService.getClients()]).pipe(
       map(([baseComptes, clients]) => {
-        // Optimisation : Créer une map pour rechercher les comptes par numéro rapidement
-        // Mais ici on veut surtout trouver le CLIENT pour chaque compte.
         
         return baseComptes.map(compte => {
-          // Chercher le client propriétaire de ce compte
-          // On suppose que l'objet Client contient une liste 'comptes' avec au moins l'ID ou le numéro
           const proprietaire = clients.find(c => 
             c.comptes && c.comptes.some((compteClient: any) => 
               // Comparaison souple ID ou Numéro
@@ -179,15 +175,21 @@ export class CompteService {
     );
   }
 
-  deleteCompte(numeroCompte: string): boolean {
-    const current = this.comptes$.value;
-    const filtered = current.filter(c => c.numeroCompte !== numeroCompte);
-    
-    if (filtered.length === current.length) return false;
-
-    this.comptes$.next(filtered);
-    this.saveToStorage();
-    return true;
+  deleteCompte(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${id}`).pipe(
+      tap(() => {
+        const current = this.comptes$.value;
+        const filtered = current.filter(c => c.id !== id);
+        this.comptes$.next(filtered);
+        this.saveToStorage();
+        // Also refresh transactions/clients globally to be safe
+        this.clientService.refreshClients();
+      }),
+      catchError(error => {
+        console.error('Erreur lors de la suppression du compte:', error);
+        throw error;
+      })
+    );
   }
 
   deleteComptesByClient(clientId: string): void {

@@ -22,20 +22,13 @@ export class TransactionService {
   }
 
   private loadTransactions(): void {
-    // Charger les transactions via les comptes (les transactions sont liées aux comptes)
-    this.compteService.getComptes().subscribe(comptes => {
-      const allTransactions: Transaction[] = [];
-      comptes.forEach(compte => {
-        if (compte.transactions && compte.transactions.length > 0) {
-          compte.transactions.forEach(txn => {
-            allTransactions.push({
-              ...txn,
-              numeroCompte: compte.numeroCompte
-            });
-          });
-        }
-      });
-      this.transactions$.next(allTransactions);
+    // Charger TOUTES les transactions depuis le nouvel endpoint
+    this.http.get<Transaction[]>('http://localhost:8081/transactions').subscribe({
+      next: (transactions) => {
+        // Enrichir les données si nécessaire, mais le backend envoie maintenant numeroCompte et nomClient
+        this.transactions$.next(transactions);
+      },
+      error: (err) => console.error('Erreur chargement transactions', err)
     });
   }
 

@@ -13,6 +13,7 @@
   padding: 1.5rem;
   border-radius: 16px;
   border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
 }
 
 .back-link {
@@ -64,6 +65,7 @@
   border: 1px solid var(--border);
   border-radius: 16px;
   overflow: hidden;
+  box-shadow: var(--shadow-sm);
 }
 
 .card-header {
@@ -109,27 +111,30 @@
 
 .info-item .value {
   font-size: 1rem;
-  color: black ;
+  color: var(--text-primary);
   font-weight: 500;
 }
 
 .info-item .value a {
-  color: black ;
+  color: var(--text-primary);
   text-decoration: none;
 }
 
 .info-item .value a:hover {
   text-decoration: underline;
+  color: var(--primary);
 }
 
 .summary-card {
-  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  background: white;
   border-radius: 16px;
   padding: 1.5rem;
-  color: white;
+  color: var(--text-primary);
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border);
 }
 
 .summary-item {
@@ -140,7 +145,8 @@
 
 .summary-item i {
   font-size: 2rem;
-  opacity: 0.9;
+  color: var(--primary);
+  opacity: 1;
 }
 
 .summary-content {
@@ -162,6 +168,13 @@
   margin-top: auto;
   background: rgba(255, 255, 255, 0.2);
   border: 1px solid rgba(255, 255, 255, 0.3);
+  color: black;
+  text-align: center;
+  padding: 0.75rem;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 500;
+  display: block;
 }
 
 .btn-add-account:hover {
@@ -174,6 +187,7 @@
   border: 1px solid var(--border);
   border-radius: 16px;
   overflow: hidden;
+  box-shadow: var(--shadow-sm);
 }
 
 .section-header {
@@ -222,14 +236,20 @@
 }
 
 .account-tab.active {
-  background: var(--primary);
+  background: #f0fdf4;
+  /* Very light green bg */
   border-color: var(--primary);
-  color: white;
+  color: var(--primary);
 }
 
 .account-tab.active .tab-type,
 .account-tab.active .tab-number {
-  color: white;
+  color: var(--text-primary);
+}
+
+.account-tab.active .tab-type {
+  color: var(--primary);
+  font-weight: 700;
 }
 
 .tab-type {
@@ -260,7 +280,7 @@
 }
 
 .account-tab.active .tab-balance {
-  color: white;
+  color: var(--text-primary);
 }
 
 .account-detail {
@@ -321,6 +341,7 @@
 .btn-sm {
   padding: 0.5rem 1rem;
   font-size: 0.9rem;
+  border-radius: 8px;
 }
 
 .transactions-section h4 {
@@ -343,13 +364,15 @@
   padding: 1rem;
   border-radius: 10px;
   background: var(--bg-secondary);
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
 }
 
-
-
-
-
-
+.transaction-item:hover {
+  border-color: var(--border);
+  background: white;
+  box-shadow: var(--shadow-sm);
+}
 
 .txn-icon {
   width: 40px;
@@ -363,14 +386,18 @@
 
 .transaction-item.depot .txn-icon {
   color: var(--success);
+  background: #dcfce7;
 }
 
 .transaction-item.retrait .txn-icon {
   color: var(--danger);
+  background: #fee2e2;
 }
 
 .transaction-item.virement .txn-icon {
   color: var(--primary);
+  background: #e0f2fe;
+  /* Light blue/green depending on implementation, ensuring contrast */
 }
 
 .txn-info {
@@ -428,68 +455,6 @@
 
 .no-accounts p {
   margin: 0.5rem 0 1.5rem 0;
-}
-
-/* Modal */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  -webkit-backdrop-filter: blur(4px);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.modal {
-  background: var(--card-bg);
-  border-radius: 16px;
-  width: 90%;
-  max-width: 450px;
-  box-shadow: var(--shadow-xl);
-}
-
-.modal-header {
-  padding: 1.5rem;
-  border-bottom: 1px solid var(--border);
-}
-
-.modal-header h3 {
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  color: var(--danger);
-}
-
-.modal-body {
-  padding: 1.5rem;
-}
-
-.modal-body p {
-  margin: 0 0 1rem 0;
-}
-
-.modal-body .warning {
-  color: var(--danger);
-  font-size: 0.9rem;
-  background: rgba(239, 68, 68, 0.1);
-  padding: 0.75rem;
-  border-radius: 8px;
-  margin: 0;
-}
-
-.modal-footer {
-  padding: 1.5rem;
-  border-top: 1px solid var(--border);
-  display: flex;
-  justify-content: flex-end;
-  gap: 1rem;
 }
 
 @media (max-width: 1024px) {
@@ -630,7 +595,7 @@
 }
 
 .btn-info {
-  background: #0ea5e9;
+  background: var(--info);
   color: white;
   border: none;
 }
@@ -803,6 +768,7 @@
 
 /* Styles d'impression */
 @media print {
+
   .page-header,
   .info-card,
   .summary-card,

@@ -75,15 +75,18 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
     this.subscriptions.add(
       this.transactionService.getTransactions().subscribe(txns => {
-        this.stats.totalTransactions = txns.length;
+        this.stats.totalTransactions = txns.filter(t => t.type !== 'VIREMENT_RECU').length;
       })
     );
   }
 
   loadRecentData(): void {
     this.subscriptions.add(
-      this.transactionService.getRecentTransactions(5).subscribe(txns => {
-        this.recentTransactions = txns;
+      this.transactionService.getRecentTransactions(10).subscribe(txns => {
+        // Filter out VIREMENT_RECU (Black Icon) to avoid duplication
+        this.recentTransactions = txns
+          .filter(t => t.type !== 'VIREMENT_RECU')
+          .slice(0, 5);
       })
     );
   }
@@ -108,14 +111,15 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
     switch (txn.type) {
       case 'DEPOT':
-        return `Dépôt sur le compte ${numCompte} (${clientName})`;
+        return `Dépôt sur le compte ${numCompte}`;
       case 'RETRAIT':
-        return `Retrait du compte ${numCompte} (${clientName})`;
+        return `Retrait du compte ${numCompte}`;
       case 'VIREMENT':
+      case 'VIREMENT_RECU':
       case 'TRANSFERT':
         const dest = this.getCompteInfo(txn.compteDestination || '');
         const destName = dest ? `${dest.clientPrenom} ${dest.clientNom}` : 'Inconnu';
-        return `Virement de ${numCompte} (${clientName}) vers ${txn.compteDestination || '????'} (${destName})`;
+        return `Virement de ${numCompte} vers ${txn.compteDestination || '????'}`;
       default:
         return `${txn.type} sur compte ${numCompte}`;
     }

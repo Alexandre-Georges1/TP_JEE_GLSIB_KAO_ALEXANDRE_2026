@@ -1,11 +1,9 @@
 package egabank.api.devoir.dto;
-
 import egabank.api.devoir.entity.Compte;
 import egabank.api.devoir.entity.Transaction;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
 import java.time.LocalDate;
 import java.util.List;
 

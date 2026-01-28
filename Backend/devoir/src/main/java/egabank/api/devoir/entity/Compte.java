@@ -24,10 +24,8 @@ public class Compte {
     @NotBlank(message = "Le type de compte est obligatoire")
     private String typeCompte;
 
-
     private Integer solde;
-
-
+    
     @ManyToOne
     @JoinColumn(name = "client_id")
     @com.fasterxml.jackson.annotation.JsonBackReference(value = "client-compte")
@@ -38,7 +36,7 @@ public class Compte {
         return client != null ? client.getId() : null;
     }
 
-    @OneToMany(mappedBy="compte", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy="compte")
     @com.fasterxml.jackson.annotation.JsonManagedReference(value = "compte-transaction") 
     List<Transaction> transactions;
 }

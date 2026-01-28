@@ -40,9 +40,10 @@ export class ClientHistoriqueComponent implements OnInit {
   private loadTransactions(): void {
     this.transactionService.getTransactions().subscribe(allTransactions => {
       const myTransactions = allTransactions.filter((t: Transaction) => 
-        t.numeroCompte === this.numeroCompte() || 
-        t.compteDestination === this.numeroCompte()
+        (t.numeroCompte === this.numeroCompte() && t.type !== 'VIREMENT_RECU') ||
+        (t.compteDestination === this.numeroCompte() && t.type === 'VIREMENT')
       );
+      
       // Trier par date décroissante
       this.transactions.set(
         myTransactions.sort((a: Transaction, b: Transaction) => 
@@ -88,6 +89,7 @@ export class ClientHistoriqueComponent implements OnInit {
     if (transaction.type === 'DEPOT') return '+';
     if (transaction.type === 'RETRAIT') return '-';
     if (transaction.type === 'VIREMENT') {
+      // If I am the sender -> Debit (-), If I am the receiver -> Credit (+)
       return transaction.numeroCompte === this.numeroCompte() ? '-' : '+';
     }
     return '';
@@ -97,12 +99,13 @@ export class ClientHistoriqueComponent implements OnInit {
     if (transaction.type === 'DEPOT') return 'credit';
     if (transaction.type === 'RETRAIT') return 'debit';
     if (transaction.type === 'VIREMENT') {
+       // If I am the sender -> Debit (Red), If I am the receiver -> Credit (Green)
       return transaction.numeroCompte === this.numeroCompte() ? 'debit' : 'credit';
     }
     return '';
   }
 
-  formatDate(date: Date): string {
+  formatDate(date: Date | string): string {
     return new Date(date).toLocaleDateString('fr-FR', {
       day: '2-digit',
       month: 'long',

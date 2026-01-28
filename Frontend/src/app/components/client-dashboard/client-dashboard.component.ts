@@ -93,11 +93,11 @@ export class ClientDashboardComponent implements OnInit {
 
   private setCompteAndLoadTransactions(compte: Compte): void {
     this.compte.set(compte);
-    // On s'assure de recharger les transactions fraîches pour ce compte
+      
     this.transactionService.getTransactions().subscribe(allTransactions => {
       const clientTransactions = allTransactions.filter((t: Transaction) => 
-        (t.numeroCompte === compte.numeroCompte) || 
-        (t.compteDestination === compte.numeroCompte)
+        (t.numeroCompte === compte.numeroCompte && t.type !== 'VIREMENT_RECU') ||
+        (t.compteDestination === compte.numeroCompte && t.type === 'VIREMENT')
       );
       
       this.transactions.set(
@@ -112,6 +112,7 @@ export class ClientDashboardComponent implements OnInit {
     if (transaction.type === 'DEPOT') return '+';
     if (transaction.type === 'RETRAIT') return '-';
     if (transaction.type === 'VIREMENT') {
+       // If I am the sender -> Debit (-), If I am the receiver -> Credit (+)
       return transaction.numeroCompte === this.compte()?.numeroCompte ? '-' : '+';
     }
     return '';
@@ -121,12 +122,13 @@ export class ClientDashboardComponent implements OnInit {
     if (transaction.type === 'DEPOT') return 'credit';
     if (transaction.type === 'RETRAIT') return 'debit';
     if (transaction.type === 'VIREMENT') {
+      // If I am the sender -> Debit, If I am the receiver -> Credit
       return transaction.numeroCompte === this.compte()?.numeroCompte ? 'debit' : 'credit';
     }
     return '';
   }
 
-  formatDate(date: Date): string {
+  formatDate(date: Date | string): string {
     return new Date(date).toLocaleDateString('fr-FR', {
       day: '2-digit',
       month: 'short',

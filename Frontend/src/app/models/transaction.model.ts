@@ -1,12 +1,12 @@
 import { Compte } from './compte.model';
 
-export type TypeTransaction = 'DEPOT' | 'RETRAIT' | 'VIREMENT' | 'TRANSFERT' | 'TRANSFER';
+export type TypeTransaction = 'DEPOT' | 'RETRAIT' | 'VIREMENT' | 'VIREMENT_RECU' | 'VIREMENT_EMIS' | 'TRANSFERT' | 'TRANSFER';
 
 // Interface correspondant à l'entité backend
 export interface Transaction {
-  id?: number;
-  dateTransaction: Date;
-  type: string;
+  id?: number | null;
+  dateTransaction: string;
+  type: TypeTransaction;
   montantAvant: number;
   montantApres: number;
   montant: number;
@@ -17,8 +17,11 @@ export interface Transaction {
   // Relations (optionnelles car @JsonBackReference)
   compte?: Compte;
   
-  // Champs utilitaires pour le frontend ou payload
+  // Nouveaux champs snapshot
   numeroCompte?: string;
+  nomClient?: string;
+  
+  // Champs utilitaires pour le frontend
   description?: string;
   compteDestination?: string;
 }

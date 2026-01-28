@@ -268,13 +268,11 @@
 .message.success {
   background: #d4edda;
   color: #155724;
-  border-left: 4px solid var(--success);
 }
 
 .message.error {
   background: #f8d7da;
   color: #721c24;
-  border-left: 4px solid var(--danger);
 }
 
 @keyframes slideIn {

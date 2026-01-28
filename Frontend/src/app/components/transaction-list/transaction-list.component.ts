@@ -80,6 +80,12 @@ export class TransactionListComponent implements OnInit {
   applyFilters(): void {
     let result = [...this.transactions];
 
+    // Filter out VIREMENT_RECU (Black Icon) only in global view
+    // If a specific account is selected, we want to see incoming transfers
+    if (!this.selectedCompte) {
+      result = result.filter(t => t.type !== 'VIREMENT_RECU');
+    }
+
     if (this.selectedCompte) {
       result = result.filter(t => 
         t.numeroCompte === this.selectedCompte
@@ -170,14 +176,14 @@ export class TransactionListComponent implements OnInit {
 
     switch (txn.type) {
       case 'DEPOT':
-        return `Dépôt sur le compte ${numCompte} (${clientName})`;
+        return `Dépôt sur le compte ${numCompte}`;
       case 'RETRAIT':
-        return `Retrait du compte ${numCompte} (${clientName})`;
+        return `Retrait du compte ${numCompte}`;
       case 'VIREMENT':
       case 'TRANSFERT':
         const dest = this.getCompteInfo(txn.compteDestination || '');
         const destName = dest ? `${dest.clientPrenom} ${dest.clientNom}` : 'Inconnu';
-        return `Virement de ${numCompte} (${clientName}) vers ${txn.compteDestination} (${destName})`;
+        return `Virement de ${numCompte} vers ${txn.compteDestination}`;
       default:
         return `${txn.type} sur compte ${numCompte}`;
     }

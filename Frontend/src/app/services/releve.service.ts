@@ -95,8 +95,10 @@ export class ReleveService {
         let totalDebits = 0;
 
         const releveTransactions: ReleveTransaction[] = transactions.map(t => {
-          const isCredit = t.type === 'DEPOT' || t.type === 'VIREMENT_RECU' || 
-                          (t.type === 'VIREMENT' && t.compteDestination === compte.numeroCompte);
+          // Utilisation de 'as any' pour contourner temporairement la restriction de l'enum si VIREMENT_RECU manque
+          const type = t.type as any;
+          const isCredit = type === 'DEPOT' || type === 'VIREMENT_RECU' || 
+                          (type === 'VIREMENT' && t.compteDestination === compte.numeroCompte);
           
           if (isCredit) {
             totalCredits += t.montant;

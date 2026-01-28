@@ -296,7 +296,7 @@
                 <i class="fas" [class]="getTransactionIcon(txn.type)"></i>
               </div>
               <div class="txn-info">
-                <span class="txn-description">{{ txn.description }}</span>
+                <span class="txn-description">{{ getTransactionDescription(txn) }}</span>
                 <span class="txn-date">{{ txn.dateTransaction | date:'dd/MM/yyyy HH:mm' }}</span>
               </div>
               <div class="txn-amount" [class.credit]="txn.type === 'DEPOT'" [class.debit]="txn.type !== 'DEPOT'">
@@ -337,7 +337,8 @@
     </div>
     <div class="modal-body">
       <p>Êtes-vous sûr de vouloir supprimer <strong>{{ client.prenom }} {{ client.nom }}</strong> ?</p>
-      <p class="warning">Cette action supprimera également tous ses comptes et transactions.</p>
+      <p class="warning">Cette action supprimera également tous ses comptes. Les transactions associées seront
+        conservées.</p>
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" (click)="cancelDelete()">Annuler</button>
@@ -359,7 +360,7 @@
     <div class="modal-body">
       <p>Êtes-vous sûr de vouloir supprimer le compte <strong>{{ compteToDelete.numeroCompte }}</strong> ?</p>
       <p class="warning">Le solde actuel est de {{ compteToDelete.solde | number:'1.2-2' }} FCFA. Toutes les
-        transactions seront également supprimées.</p>
+        transactions seront conservées.</p>
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" (click)="cancelDelete()">Annuler</button>

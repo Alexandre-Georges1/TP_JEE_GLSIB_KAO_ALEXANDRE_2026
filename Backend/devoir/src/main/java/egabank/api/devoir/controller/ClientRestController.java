@@ -1,10 +1,8 @@
 package egabank.api.devoir.controller;
-
 import jakarta.validation.Valid;
 import egabank.api.devoir.entity.Client;
 import egabank.api.devoir.service.IclientService;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 
 @RestController

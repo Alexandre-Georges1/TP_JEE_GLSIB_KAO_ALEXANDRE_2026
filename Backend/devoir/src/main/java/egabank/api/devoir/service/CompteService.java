@@ -1,6 +1,4 @@
 package egabank.api.devoir.service;
-
-
 import egabank.api.devoir.entity.Compte;
 import egabank.api.devoir.entity.Transaction;
 import egabank.api.devoir.exception.SoldeInsuffisantException;
@@ -8,7 +6,6 @@ import egabank.api.devoir.repository.CompteRepository;
 import egabank.api.devoir.repository.TransactionRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -33,7 +30,6 @@ public class CompteService implements IcompteService {
     @Override
     public Compte saveCompte(Compte compte){
         if (compte.getNumeroCompte() == null || compte.getNumeroCompte().isEmpty()) {
-            // Génération de compte à 11 chiffres aléatoires
             long min = 10000000000L;
             long max = 99999999999L;
             long randomNum = min + (long)(Math.random() * (max - min));
@@ -62,7 +58,17 @@ public class CompteService implements IcompteService {
     }
     @Override
     public void deleteCompte(Long id) {
-        compteRepository.deleteById(id);
+        Compte compte = compteRepository.findById(id).orElse(null);
+        if (compte != null) {
+            
+            if (compte.getTransactions() != null) {
+                for (Transaction transaction : compte.getTransactions()) {
+                    transaction.setCompte(null);
+                    transactionRepository.save(transaction);
+                }
+            }
+            compteRepository.delete(compte);
+        }
     }
 
     public void deposer(Long id, Integer montant, String origineFonds) {
@@ -72,14 +78,11 @@ public class CompteService implements IcompteService {
         if (montant == null || montant <= 0) {
             throw new IllegalArgumentException("Montant de dépôt invalide");
         }
-        
         if (origineFonds == null || origineFonds.trim().isEmpty()) {
             throw new IllegalArgumentException("L'origine des fonds est obligatoire pour un dépôt");
         }
-
         Integer soldeAvant = compte.getSolde();
         Integer soldeApres = soldeAvant + montant;
-
         compte.setSolde(soldeApres);
         compteRepository.save(compte);
 
@@ -92,11 +95,13 @@ public class CompteService implements IcompteService {
         transaction.setMontant(montant);
         transaction.setOrigineFonds(origineFonds);
         transaction.setCompte(compte);
+        transaction.setNumeroCompte(compte.getNumeroCompte());
+        if (compte.getClient() != null) {
+            transaction.setNomClient(compte.getClient().getNom() + " " + compte.getClient().getPrenom());
+        }
         
         transactionRepository.save(transaction);
     }
-
-
     public void retirer(Long id, Integer montant) {
         Compte compte = compteRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Compte introuvable"));
@@ -110,10 +115,8 @@ public class CompteService implements IcompteService {
 
         Integer soldeAvant = compte.getSolde();
         Integer soldeApres = soldeAvant - montant;
-
         compte.setSolde(soldeApres);
         compteRepository.save(compte);
-
         Transaction transaction = new Transaction();
         transaction.setDateTransaction(LocalDateTime.now());
         transaction.setType("RETRAIT");
@@ -122,35 +125,71 @@ public class CompteService implements IcompteService {
         transaction.setMontant(montant);
         transaction.setOrigineFonds(null); 
         transaction.setCompte(compte);
+        transaction.setNumeroCompte(compte.getNumeroCompte());
+        if (compte.getClient() != null) {
+            transaction.setNomClient(compte.getClient().getNom() + " " + compte.getClient().getPrenom());
+        }
         
         transactionRepository.save(transaction);
     }
-
     @Transactional
     public void transferer(Long id, Integer montant, Long id2) {
-        retirer(id, montant);
+        Compte compteSource = compteRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Compte source introuvable"));
 
+        if (montant == null || montant <= 0) {
+            throw new IllegalArgumentException("Montant invalide");
+        }
+        if (compteSource.getSolde() < montant) {
+            throw new SoldeInsuffisantException("Solde insuffisant !");
+        }
+
+        Integer soldeSourceAvant = compteSource.getSolde();
+        Integer soldeSourceApres = soldeSourceAvant - montant;
+        compteSource.setSolde(soldeSourceApres);
+        compteRepository.save(compteSource);
         Compte compteDestination = compteRepository.findById(id2)
                 .orElseThrow(() -> new RuntimeException("Compte destination introuvable"));
 
-        Integer soldeAvant = compteDestination.getSolde();
-        Integer soldeApres = soldeAvant + montant;
-
-        compteDestination.setSolde(soldeApres);
+        Integer soldeDestAvant = compteDestination.getSolde();
+        Integer soldeDestApres = soldeDestAvant + montant;
+        compteDestination.setSolde(soldeDestApres);
         compteRepository.save(compteDestination);
 
-        Transaction transaction = new Transaction();
-        transaction.setDateTransaction(LocalDateTime.now());
-        transaction.setType("VIREMENT_RECU");
-        transaction.setMontantAvant(soldeAvant);
-        transaction.setMontantApres(soldeApres);
-        transaction.setMontant(montant);
-        transaction.setOrigineFonds(null); 
-        transaction.setCompte(compteDestination);
+       
+        Transaction transactionSource = new Transaction();
+        transactionSource.setDateTransaction(LocalDateTime.now());
+        transactionSource.setType("VIREMENT");
+        transactionSource.setMontantAvant(soldeSourceAvant);
+        transactionSource.setMontantApres(soldeSourceApres);
+        transactionSource.setMontant(montant);
+        transactionSource.setOrigineFonds(null);
+        transactionSource.setCompte(compteSource); 
+        transactionSource.setNumeroCompte(compteSource.getNumeroCompte());
+    
+        transactionSource.setCompteDestination(compteDestination.getNumeroCompte());
+        if (compteSource.getClient() != null) {
+            transactionSource.setNomClient(compteSource.getClient().getNom() + " " + compteSource.getClient().getPrenom());
+        }
+        transactionRepository.save(transactionSource);
+        Transaction transactionDest = new Transaction();
+        transactionDest.setDateTransaction(LocalDateTime.now());
+        transactionDest.setType("VIREMENT_RECU");
+        transactionDest.setMontantAvant(soldeDestAvant);
+        transactionDest.setMontantApres(soldeDestApres);
+        transactionDest.setMontant(montant);
+        transactionDest.setOrigineFonds(null);
+        transactionDest.setCompte(compteDestination); 
+        transactionDest.setNumeroCompte(compteDestination.getNumeroCompte());
         
-        transactionRepository.save(transaction);
-    }
+        
+        transactionDest.setCompteDestination(compteSource.getNumeroCompte());
 
+        if (compteDestination.getClient() != null) {
+            transactionDest.setNomClient(compteDestination.getClient().getNom() + " " + compteDestination.getClient().getPrenom());
+        }
+        transactionRepository.save(transactionDest);
+    }
     public Compte updateCompte(Long id, Compte compteModifie) {
 
         Compte compteExistant = compteRepository.findById(id)

@@ -7,7 +7,6 @@
       <p class="subtitle">Liste de tous les clients de la banque</p>
     </div>
     <a routerLink="/dashboard/clients/new" class="btn btn-primary">
-      <i class="fas fa-plus"></i>
       Nouveau Client
     </a>
   </div>
@@ -133,7 +132,7 @@
       </div>
       <div class="modal-body">
         <p>Êtes-vous sûr de vouloir supprimer le client <strong>{{ clientToDelete.prenom }} {{ clientToDelete.nom }}</strong> ?</p>
-        <p class="warning">Cette action supprimera également tous ses comptes bancaires et l'historique des transactions associées.</p>
+        <p class="warning">Cette action supprimera également tous ses comptes bancaires associées.</p>
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" (click)="cancelDelete()">Annuler</button>

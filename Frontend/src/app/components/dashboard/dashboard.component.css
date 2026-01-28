@@ -14,12 +14,19 @@
 .welcome-section h1 {
   margin: 0;
   font-size: 2rem;
-  color: black;
+  color: var(--text-primary);
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  background: linear-gradient(135deg, var(--text-primary) 0%, #10b981 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .welcome-section p {
   margin: 0.5rem 0 0 0;
   color: var(--text-secondary);
+  font-size: 1.1rem;
 }
 
 .header-actions {
@@ -36,7 +43,7 @@
 }
 
 .stat-card {
-  background: var(--card-bg);
+  background: white;
   border: 1px solid var(--border);
   border-radius: 20px;
   padding: 1.5rem;
@@ -45,21 +52,14 @@
   gap: 1rem;
   overflow: hidden;
   transition: all 0.3s ease;
+  position: relative;
+  box-shadow: var(--shadow-sm);
 }
-
-.stat-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-}
-
-
 
 .stat-card:hover {
+  transform: translateY(-5px);
   box-shadow: var(--shadow-lg);
+  border-color: rgba(16, 185, 129, 0.3);
 }
 
 .stat-icon {
@@ -70,25 +70,27 @@
   align-items: center;
   justify-content: center;
   font-size: 1.5rem;
+  transition: all 0.3s ease;
 }
 
 .stat-card.clients .stat-icon {
-  background: linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(22, 163, 74, 0.1));
-  color: #22c55e;
-}
-
-.stat-card.comptes .stat-icon {
-  background: linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(22, 163, 74, 0.1));
-  color: #22c55e;
-}
-
-.stat-card.solde .stat-icon {
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(20, 184, 166, 0.1));
+  background: rgba(16, 185, 129, 0.1);
   color: #10b981;
 }
 
+.stat-card.comptes .stat-icon {
+  background: rgba(5, 150, 105, 0.1);
+  color: #059669;
+}
+
+.stat-card.solde .stat-icon {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
+}
+
 .stat-card.transactions .stat-icon {
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(249, 115, 22, 0.1));
+  background: rgba(245, 158, 11, 0.1);
   color: #f59e0b;
 }
 
@@ -102,11 +104,13 @@
   font-size: 1.75rem;
   font-weight: 700;
   color: var(--text-primary);
+  letter-spacing: -0.5px;
 }
 
 .stat-label {
   font-size: 0.9rem;
   color: var(--text-secondary);
+  font-weight: 500;
 }
 
 .stat-breakdown {
@@ -126,7 +130,7 @@
 .stat-link {
   width: 40px;
   height: 40px;
-  border-radius: 50%;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -137,7 +141,7 @@
 }
 
 .stat-link:hover {
-  background: var(--primary);
+  background: #10b981;
   color: white;
 }
 
@@ -150,50 +154,58 @@
 }
 
 .dashboard-card {
-  background: var(--card-bg);
+  background: white;
   border: 1px solid var(--border);
   border-radius: 20px;
   overflow: hidden;
+  box-shadow: var(--shadow-md);
+  display: flex;
+  flex-direction: column;
 }
 
 .card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1.25rem 1.5rem;
+  padding: 1.5rem;
   border-bottom: 1px solid var(--border);
-  background: var(--bg-secondary);
+  background: white;
 }
 
 .card-header h2 {
   margin: 0;
-  font-size: 1.1rem;
+  font-size: 1.25rem;
   display: flex;
   align-items: center;
   gap: 0.75rem;
   color: var(--text-primary);
-}
-
-.card-header h2 i {
-  color: var(--primary);
+  font-weight: 700;
 }
 
 .view-all {
   font-size: 0.9rem;
-  color: var(--primary);
+  color: #10b981;
   text-decoration: none;
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  background: rgba(16, 185, 129, 0.1);
   transition: all 0.2s ease;
 }
 
 .view-all:hover {
-  gap: 0.75rem;
+  background: #10b981;
+  color: white;
 }
 
 .card-body {
-  padding: 1rem;
+  padding: 0;
+  /* Remove padding to let lists touch edges */
+  flex: 1;
+  overflow: hidden;
 }
 
 /* Transactions List */
@@ -206,66 +218,75 @@
   display: flex;
   align-items: center;
   gap: 1rem;
-  padding: 0.875rem;
-  border-radius: 12px;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--border);
   transition: all 0.2s ease;
+  background: white;
+}
+
+.transaction-item:last-child {
+  border-bottom: none;
 }
 
 .transaction-item:hover {
-  background: var(--bg-secondary);
+  background: #f0fdf4;
+  /* Light green hover */
 }
 
 .txn-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
+  width: 45px;
+  height: 45px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 1.1rem;
 }
 
 .transaction-item.depot .txn-icon {
   background: rgba(16, 185, 129, 0.1);
-  color: var(--success);
+  color: #10b981;
 }
 
 .transaction-item.retrait .txn-icon {
   background: rgba(239, 68, 68, 0.1);
-  color: var(--danger);
+  color: #ef4444;
 }
 
 .transaction-item.virement .txn-icon {
-  background: rgba(34, 197, 94, 0.1);
-  color: var(--primary);
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
 }
 
 .txn-info {
   flex: 1;
   display: flex;
   flex-direction: column;
+  gap: 0.25rem;
 }
 
 .txn-description {
-  font-weight: 500;
+  font-weight: 600;
   color: var(--text-primary);
   font-size: 0.95rem;
 }
 
 .txn-date {
   font-size: 0.8rem;
-  color: var(--text-muted);
+  color: var(--text-secondary);
 }
 
 .txn-amount {
-  font-weight: 600;
+  font-weight: 700;
+  font-size: 1rem;
 }
 
 .txn-amount.credit {
-  color: var(--success);
+  color: #10b981;
 }
 
 .txn-amount.debit {
-  color: var(--danger);
+  color: var(--text-primary);
 }
 
 /* Clients List */
@@ -278,43 +299,53 @@
   display: flex;
   align-items: center;
   gap: 1rem;
-  padding: 0.875rem;
-  border-radius: 12px;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--border);
   text-decoration: none;
   transition: all 0.2s ease;
+  background: white;
+}
+
+.client-item:last-child {
+  border-bottom: none;
 }
 
 .client-item:hover {
-  background: var(--bg-secondary);
+  background: #f0fdf4;
+  padding-left: 1.75rem;
+  /* Slight shift effect */
 }
 
 .client-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
+  width: 45px;
+  height: 45px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 1.2rem;
+  box-shadow: 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
 .client-avatar.male {
-  background: rgba(34, 197, 94, 0.1);
-  color: var(--primary);
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
 }
 
 .client-avatar.female {
-  background: rgba(236, 72, 153, 0.1);
-  color: #ec4899;
+  background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
+  color: white;
 }
 
 .client-info {
   flex: 1;
   display: flex;
   flex-direction: column;
+  gap: 0.25rem;
 }
 
 .client-name {
-  font-weight: 500;
+  font-weight: 600;
   color: var(--text-primary);
 }
 
@@ -323,8 +354,16 @@
   color: var(--text-muted);
 }
 
-.client-item > i {
-  color: var(--text-muted);
+.client-item>i {
+  color: #10b981;
+  opacity: 0;
+  transform: translateX(-10px);
+  transition: all 0.2s ease;
+}
+
+.client-item:hover>i {
+  opacity: 1;
+  transform: translateX(0);
 }
 
 /* Empty State */
@@ -333,101 +372,152 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 2rem;
+  padding: 3rem 2rem;
   text-align: center;
   color: var(--text-muted);
 }
 
 .empty-state i {
-  font-size: 2.5rem;
-  margin-bottom: 0.75rem;
-  opacity: 0.5;
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  color: #d1d5db;
 }
 
 .empty-state p {
-  margin: 0 0 1rem 0;
+  margin: 0 0 1.5rem 0;
+  font-size: 1rem;
 }
 
 /* Quick Actions */
 .quick-actions {
-  background: var(--card-bg);
+  background: white;
   border: 1px solid var(--border);
   border-radius: 20px;
-  padding: 1.5rem;
+  padding: 2rem;
+  box-shadow: var(--shadow-md);
 }
 
 .quick-actions h3 {
-  margin: 0 0 1.25rem 0;
+  margin: 0 0 1.5rem 0;
   color: var(--text-primary);
-  font-size: 1.1rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
 }
 
 .actions-grid {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
-  gap: 1rem;
+  gap: 1.5rem;
 }
 
 .action-card {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.75rem;
-  padding: 1.25rem;
+  gap: 1rem;
+  padding: 1.5rem 1rem;
   border-radius: 16px;
-  background: var(--bg-secondary);
+  background: white;
+  border: 1px solid var(--border);
   text-decoration: none;
   transition: all 0.3s ease;
 }
 
 .action-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-md);
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.15);
+  border-color: #10b981;
+  background: #f0fdf4;
 }
 
 .action-icon {
-  width: 50px;
-  height: 50px;
-  border-radius: 14px;
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.25rem;
+  font-size: 1.5rem;
+  transition: all 0.3s ease;
 }
 
-.action-icon.clients {
-  background: linear-gradient(135deg, #22c55e, #16a34a);
+.action-card:hover .action-icon {
+  transform: scale(1.1);
+}
+
+/* Modern clean icons for actions */
+.action-icon {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+}
+
+.action-card:hover .action-icon {
+  background: #10b981;
   color: white;
+}
+
+/* Specific colors for specific actions if desired, otherwise uniform clean look */
+.action-icon.clients {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
 }
 
 .action-icon.comptes {
-  background: linear-gradient(135deg, #22c55e, #16a34a);
-  color: white;
+  background: rgba(5, 150, 105, 0.1);
+  color: #059669;
 }
 
 .action-icon.depot {
-  background: linear-gradient(135deg, #10b981, #059669);
-  color: white;
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
 }
 
 .action-icon.retrait {
-  background: linear-gradient(135deg, #f59e0b, #d97706);
-  color: white;
+  background: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
 }
 
 .action-icon.virement {
-  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
-  color: white;
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
 }
 
 .action-icon.historique {
-  background: linear-gradient(135deg, #64748b, #475569);
+  background: rgba(100, 116, 139, 0.1);
+  color: #64748b;
+}
+
+/* Hover override for colored icons */
+.action-card:hover .action-icon.clients,
+.action-card:hover .action-icon.comptes,
+.action-card:hover .action-icon.depot {
+  background: #10b981;
+  color: white;
+}
+
+.action-card:hover .action-icon.retrait {
+  background: #f59e0b;
+  color: white;
+  box-shadow: 0 4px 10px rgba(245, 158, 11, 0.3);
+}
+
+.action-card:hover .action-icon.virement {
+  background: #3b82f6;
+  color: white;
+  box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);
+}
+
+.action-card:hover .action-icon.historique {
+  background: #64748b;
   color: white;
 }
 
 .action-card span {
-  font-size: 0.85rem;
-  font-weight: 500;
+  font-size: 0.9rem;
+  font-weight: 600;
   color: var(--text-primary);
   text-align: center;
 }
@@ -446,7 +536,16 @@
   .dashboard-header {
     flex-direction: column;
     align-items: flex-start;
-    gap: 1rem;
+    gap: 1.5rem;
+  }
+
+  .header-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .header-actions .btn {
+    flex: 1;
   }
 
   .stats-grid {

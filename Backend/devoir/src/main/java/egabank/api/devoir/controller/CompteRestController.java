@@ -1,10 +1,8 @@
 package egabank.api.devoir.controller;
 import egabank.api.devoir.entity.Compte;
-
 import egabank.api.devoir.service.IcompteService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 import java.util.Map;
 
@@ -31,18 +29,19 @@ public class CompteRestController {
     }
     @PostMapping("/comptes/{id}/deposer")
     public void deposer(@PathVariable Long id,  @RequestBody  Map<String, Object> body) {
-        Integer montant = (Integer) body.get("montant");
+        Integer montant = Double.valueOf(body.get("montant").toString()).intValue();
         String origineFonds = (String) body.get("origineFonds");
         compteService.deposer(id, montant, origineFonds);
     }
     @PostMapping("/comptes/{id}/retirer")
-    public void retirer(@PathVariable Long id,  @RequestBody  Map<String, Integer> body) {
-        compteService.retirer(id, body.get("montant"));
+    public void retirer(@PathVariable Long id,  @RequestBody  Map<String, Object> body) {
+        Integer montant = Double.valueOf(body.get("montant").toString()).intValue();
+        compteService.retirer(id, montant);
     }
    @PostMapping("/comptes/{id}/transferer")
-public void transferer(@PathVariable Long id, @RequestBody Map<String, Object> body) {
-    Integer montant = (Integer) body.get("montant");
-    Long id2 = ((Number) body.get("id")).longValue();
-    compteService.transferer(id, montant, id2);
-}
+    public void transferer(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+        Integer montant = Double.valueOf(body.get("montant").toString()).intValue();
+        Long id2 = Double.valueOf(body.get("id").toString()).longValue();
+        compteService.transferer(id, montant, id2);
+    }
 }
